@@ -36,7 +36,7 @@ if 'agentState' not in st.session_state:
 # llm_model = "gpt-3.5-turbo-1106"
 if 'llm_model' not in st.session_state:
     # st.session_state.llm_model = "gpt-3.5-turbo-1106"
-    st.session_state.llm_model = "gpt-4"
+    st.session_state.llm_model = "gpt-4o"
 
 # Set up memory
 msgs = StreamlitChatMessageHistory(key="langchain_messages")
@@ -48,8 +48,8 @@ selections = st.sidebar
 
 with selections:
     st.write("""**LLM model selection:**
-                Different models have widely differing costs.   \n \n  It seems that running this whole flow with chatGPT 4 costs about $0.1 per full flow as there are multiple processing steps 👻; while the 3.5-turbo is about 100x cheaper 🤑.  
-                """ 
+                Different models have widely differing costs.   \n \n  It seems that running this whole flow with chatGPT 4 costs about $0.1 per full flow as there are multiple processing steps 👻; while the 3.5-turbo is about 100x cheaper 🤑 and gpt-4o is about 6x cheaper (I think).  
+                """
                 )
     st.write('**Our prompts are currently set up for gpt-4 so you might want to run your first trial with that** ... however, multiple runs might be good to with some of the cheaper models.')
     
@@ -57,9 +57,10 @@ with selections:
     st.session_state.llm_model = st.selectbox(
         "Which LLM would you like to try?",
         [ 
-            'gpt-3.5-turbo-1106',
-            'gpt-4'],
-        placeholder=st.session_state.llm_model,
+            'gpt-4o', 
+            'gpt-4',
+            'gpt-3.5-turbo-1106'
+            ],
         key = 'llm_choice',
     )
 
