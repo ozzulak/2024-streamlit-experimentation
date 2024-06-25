@@ -6,9 +6,20 @@ from langchain_core.prompts import PromptTemplate
 from langchain.chains import ConversationChain
 from langchain.chat_models import ChatOpenAI
 from langchain.output_parsers.json import SimpleJsonOutputParser
-from langchain_core.pydantic_v1 import BaseModel, Field
-
+import openai
+from langsmith.wrappers import wrap_openai
+from langsmith import traceable
+import os
 import streamlit as st
+
+os.environ["OPENAI_API_KEY"] = st.secrets['OPENAI_API_KEY']
+os.environ["LANGCHAIN_API_KEY"] = st.secrets['LANGCHAIN_API_KEY']
+os.environ["LANGCHAIN_PROJECT"] = st.secrets['LANGCHAIN_PROJECT']
+os.environ["LANGCHAIN_TRACING_V2"] = 'true'
+
+# Auto-trace LLM calls in-context
+client = wrap_openai(openai.Client())
+
 
 st.set_page_config(page_title="Petr-bot", page_icon="📖")
 st.title("📖 Petr-teenbot")
@@ -41,7 +52,7 @@ if not openai_api_key:
 
 
 ## set the model to use
-llm_model = "gpt-4"
+llm_model = "gpt-3.5"
 #llm_model = "gpt-4o"
 chat = ChatOpenAI(temperature=0.3, model=llm_model, openai_api_key = openai_api_key)
 
@@ -60,7 +71,7 @@ conversation = ConversationChain(
 
 prompt = st.chat_input()
 
-
+@traceable # Auto-trace this function
 def getData (): 
     if len(msgs.messages) == 0:
         msgs.add_ai_message("Hi there -- Hi, I'm collecting stories about challenging experiences on social media to better understand and support our students. I'd appreciate if you could share your experience with me by answering a few questions. Let me know when you're ready! ")
@@ -70,6 +81,7 @@ def getData ():
     #     st.chat_message(msg.type).write(msg.content)
 
    # write just the last conversational turn: 
+
     if len(msgs.messages) >= 2:
         last_two_messages = msgs.messages[-1:]
     else:
@@ -98,26 +110,28 @@ def getData ():
         
         #st.text(st.write(response))
 
+@traceable # Auto-trace this function
 def extractChoices(msgs):
-    extraction_llm = ChatOpenAI(temperature=0.3, model="gpt-4", openai_api_key=openai_api_key)
+    extraction_llm = ChatOpenAI(temperature=0.1, model=llm_model, openai_api_key=openai_api_key)
 
-    extraction_prompt = """You are an expert extraction algorithm. 
-            Only extract relevant information from the text, using only the words and phrases that the text contains. 
-            If you do not know the value of an attribute asked to extract, 
-            return null for the attribute's value. 
+    ## now should be added into the lc_prompts.py
+    # extraction_prompt = """You are an expert extraction algorithm. 
+    #         Only extract relevant information from the text, using only the words and phrases that the text contains. 
+    #         If you do not know the value of an attribute asked to extract, 
+    #         return null for the attribute's value. 
 
-            You will output a JSON with `what`, `context`, `outcome` and `reaction` keys. 
+    #         You will output a JSON with `what`, `context`, `outcome` and `reaction` keys. 
 
-            These correspond to the following questions 
-            1. What happened? 
-            2. What's the context? 
-            3. What was wrong? 
-            4. What did it make you do?
+    #         These correspond to the following questions 
+    #         1. What happened? 
+    #         2. What's the context? 
+    #         3. What was wrong? 
+    #         4. What did it make you do?
             
-            Message to date: {conversation_history}
+    #         Message to date: {conversation_history}
 
-            Remember, only extract text that is in the messages above and do not change it. 
-    """
+    #         Remember, only extract text that is in the messages above and do not change it. 
+    # """
 
     extraction_template = PromptTemplate(input_variables=["conversation_history"], template = extraction_prompt)
     json_parser = SimpleJsonOutputParser()
@@ -143,7 +157,7 @@ def extractChoices(msgs):
 
     return(extractedChoices)
 
-
+@traceable # Auto-trace this function
 def summariseData(content): 
     # turn the prompt into a prompt template:
     prompt_template = PromptTemplate.from_template(prompt_one_shot)
@@ -233,6 +247,15 @@ def summariseData(content):
 
 def reviewData():
     st.divider()
+
+    text_scenarios = [
+        "Scenario 1: So, here's the deal. I've been really trying to get my head around this coding thing, specifically in langchain. I thought I'd share my struggle online, hoping for some support or advice. But guess what? My PhD students and postdocs, the very same people I've been telling how crucial it is to learn coding, just laughed at me! Can you believe it? It made me feel super ticked off and embarrassed. I mean, who needs that kind of negativity, right? So, I did what I had to do. I let all the postdocs go, re-advertised their positions, and had a serious chat with the PhDs about how uncool their reaction was to my coding struggles.",
+
+        "Scenario 2: So, here's the thing. I've been trying to learn this coding thing called langchain, right? It's been a real struggle, so I decided to share my troubles online. I thought my phd students and postdocs would understand, but instead, they just laughed at me! Can you believe that? After all the times I've told them how important it is to learn how to code. It made me feel really mad and embarrassed, you know? So, I did what I had to do. I told the postdocs they were out and had to re-advertise their positions. And I had a serious talk with the phds, telling them that laughing at my coding struggles was not cool at all.",
+
+        "Scenario 3: So, here's the deal. I've been trying to learn this coding language called langchain, right? And it's been a real struggle. So, I decided to post about it online, hoping for some support or advice. But guess what? My PhD students and postdocs, the same people I've been telling how important it is to learn coding, just laughed at me! Can you believe it? I was so ticked off and embarrassed. I mean, who does that? So, I did what any self-respecting person would do. I fired all the postdocs and re-advertised their positions. And for the PhDs? I had a serious talk with them about how uncool their reaction was to my coding struggles."
+    ]
+
     st.chat_message("ai").write("** All done! **  \n *We will be implementing the review & adapt functions next. Please reload the page to restart *")
     # If user inputs a new prompt, generate and draw a new response
 

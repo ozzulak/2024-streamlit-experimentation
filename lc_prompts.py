@@ -105,3 +105,23 @@ but you can reframe what they are saying a little to make it more understable to
 """
 
 end_prompt_core = "Create a scenario based on these responses, using youth-friendly language."
+
+
+extraction_prompt = """You are an expert extraction algorithm. 
+            Only extract relevant information from the Human answers in the text.
+            Use only the words and phrases that the text contains. 
+            If you do not know the value of an attribute asked to extract, 
+            return null for the attribute's value. 
+
+            You will output a JSON with `what`, `context`, `outcome` and `reaction` keys. 
+
+            These correspond to the following questions 
+            1. What happened? 
+            2. What's the context? 
+            3. What was wrong? 
+            4. What did it make you do?
+            
+            Message to date: {conversation_history}
+
+            Remember, only extract text that is in the messages above and do not change it. 
+    """
