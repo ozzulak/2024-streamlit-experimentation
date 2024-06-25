@@ -87,6 +87,7 @@ def getData ():
         response = conversation.invoke(input = prompt)
         print(response)
         if "FINISHED" in response['response']:
+            st.divider()
             st.chat_message("ai").write("Great, I think I got all I need -- let me summarise this for you:")
             st.session_state.agentState = "summarise"
             summariseData(msgs)
@@ -136,8 +137,9 @@ def extractChoices(msgs):
         AI: Great, I think I got all I need, let me summarise this for you. 
     """
     
-    print(msgs)
+
     extractedChoices = extractionChain.invoke({"conversation_history" : msgs})
+    # extractedChoices = extractionChain.invoke({"conversation_history" : test_messages})
 
     return(extractedChoices)
 
@@ -160,9 +162,10 @@ def summariseData(content):
 
     ### NEED TO EXTRACT THE CHOICES:
     answer_set = extractChoices(msgs)
-
-    st.chat_message("ai").write("I think you told me this ... is that correct?")
-    st.chat_message("ai").write(answer_set)
+    
+    st.divider()
+    st.chat_message("ai").write("**DEBUGGING** *-- I think this is a good summary of what you told me ... check if this is correct!*")
+    st.chat_message("ai").json(answer_set)
 
 
 
@@ -171,8 +174,8 @@ def summariseData(content):
 
     #set_debug(True)
     # try to get two different responses, each using a slightly different prompt
-
-    st.chat_message("ai").write("here are three examples of Scenarios:")
+    st.divider()
+    st.chat_message("ai").write("I'm going to try and summarise what you said in three scenarios. \n See you if you like any of these! ")
 
     response_1 = chain.invoke({
         "main_prompt" : prompt_1,
@@ -187,7 +190,7 @@ def summariseData(content):
         "outcome" : answer_set['outcome'],
         "reaction" : answer_set['reaction']
     })
-    st.chat_message("ai").write(response_1['output_scenario'])
+    st.chat_message("ai").write("**Scenario 1:**  " + response_1['output_scenario'])
 
     response_2 = chain.invoke({
         "main_prompt" : prompt_2,
@@ -203,7 +206,8 @@ def summariseData(content):
         "reaction" : answer_set['reaction']
     })
 
-    st.chat_message("ai").write(response_2['output_scenario'])
+    
+    st.chat_message("ai").write("**Scenario 2:**  " +response_2['output_scenario'])
 
     response_3 = chain.invoke({
         "main_prompt" : prompt_3,
@@ -219,7 +223,7 @@ def summariseData(content):
         "reaction" : answer_set['reaction']
     })
 
-    st.chat_message("ai").write(response_3['output_scenario'])
+    st.chat_message("ai").write("**Scenario 3:**  " + response_3['output_scenario'])
   
     st.session_state["agentState"] = "review"
 
@@ -228,8 +232,8 @@ def summariseData(content):
 
 
 def reviewData():
-
-    st.chat_message("ai").write("So what do you think?")
+    st.divider()
+    st.chat_message("ai").write("** All done! **  \n *We will be implementing the review & adapt functions next. Please reload the page to restart *")
     # If user inputs a new prompt, generate and draw a new response
 
 
@@ -238,7 +242,7 @@ def stateAgent():
 ### make choice of the right 'agent': 
     if st.session_state['agentState'] == 'start':
             getData()
-            #summariseData(msgs)
+            # summariseData(msgs)
     elif st.session_state['agentState'] == 'summarise':
             summariseData(msgs)
     elif st.session_state['agentState'] == 'review':
