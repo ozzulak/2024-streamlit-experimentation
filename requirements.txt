@@ -2,3 +2,4 @@ langchain-community
 langchain
 streamlit
 openai
+langsmith
