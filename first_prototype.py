@@ -98,7 +98,6 @@ conversation = ConversationChain(
 
 prompt = st.chat_input()
 
-@traceable # Auto-trace this function
 def getData (): 
     if len(msgs.messages) == 0:
         msgs.add_ai_message("Hi there -- I'm collecting stories about challenging experiences on social media to better understand and support our students. I'd appreciate if you could share your experience with me by answering a few questions. Let me know when you're ready! ")
@@ -137,7 +136,7 @@ def getData ():
         
         #st.text(st.write(response))
 
-@traceable # Auto-trace this function
+
 def extractChoices(msgs):
     extraction_llm = ChatOpenAI(temperature=0.1, model=st.session_state.llm_model, openai_api_key=openai_api_key)
 
