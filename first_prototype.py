@@ -12,6 +12,12 @@ from langsmith import traceable
 import os
 import streamlit as st
 
+
+## import our prompts: 
+
+from lc_prompts import *
+
+
 os.environ["OPENAI_API_KEY"] = st.secrets['OPENAI_API_KEY']
 os.environ["LANGCHAIN_API_KEY"] = st.secrets['LANGCHAIN_API_KEY']
 os.environ["LANGCHAIN_PROJECT"] = st.secrets['LANGCHAIN_PROJECT']
@@ -66,6 +72,9 @@ with selections:
 
     st.write("**Current llm-model selection:**  \n " + st.session_state.llm_model)
 
+## ensure we are using a better prompt for 4o 
+if st.session_state['llm_model'] == "gpt-4o":
+    prompt_datacollection = prompt_datacollection_4o
 
 
 view_messages = st.expander("View the message contents in session state")
@@ -83,7 +92,6 @@ if not openai_api_key:
 
 chat = ChatOpenAI(temperature=0.3, model=st.session_state.llm_model, openai_api_key = openai_api_key)
 
-from lc_prompts import *
 
 # Set up the LangChain, passing in Message History
 prompt_updated = PromptTemplate(input_variables=["history", "input"], template = prompt_datacollection)
