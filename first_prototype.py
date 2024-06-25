@@ -59,7 +59,7 @@ with selections:
         [ 
             'gpt-3.5-turbo-1106',
             'gpt-4'],
-        placeholder="gpt-3.5-turbo",
+        placeholder=st.session_state.llm_model,
         key = 'llm_choice',
     )
 
@@ -100,7 +100,7 @@ prompt = st.chat_input()
 @traceable # Auto-trace this function
 def getData (): 
     if len(msgs.messages) == 0:
-        msgs.add_ai_message("Hello hello -- I'm collecting stories about challenging experiences on social media to better understand and support our students. I'd appreciate if you could share your experience with me by answering a few questions. Let me know when you're ready! ")
+        msgs.add_ai_message("Hi there -- I'm collecting stories about challenging experiences on social media to better understand and support our students. I'd appreciate if you could share your experience with me by answering a few questions. Let me know when you're ready! ")
 
     # ## write the whole history:
     # for msg in msgs.messages:
