@@ -52,8 +52,8 @@ if not openai_api_key:
 
 
 ## set the model to use
-llm_model = "gpt-3.5"
-#llm_model = "gpt-4o"
+# llm_model = "gpt-3.5-turbo-1106"
+llm_model = "gpt-4"
 chat = ChatOpenAI(temperature=0.3, model=llm_model, openai_api_key = openai_api_key)
 
 from lc_prompts import *
