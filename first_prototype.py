@@ -6,13 +6,14 @@ from langchain_core.prompts import PromptTemplate
 from langchain.chains import ConversationChain
 from langchain.chat_models import ChatOpenAI
 from langchain.output_parsers.json import SimpleJsonOutputParser
-from langchain.callbacks.streamlit import StreamlitCallbackHandler
 import openai
 from langsmith.wrappers import wrap_openai
-from langsmith import traceable
 from langsmith import Client
+from langsmith import traceable
+from langsmith.run_helpers import get_current_run_tree
 from streamlit_feedback import streamlit_feedback
 import uuid
+from functools import partial
 
 import os
 
@@ -25,13 +26,17 @@ from lc_prompts import *
 from testing_prompts import * 
 
 
+
 os.environ["OPENAI_API_KEY"] = st.secrets['OPENAI_API_KEY']
 os.environ["LANGCHAIN_API_KEY"] = st.secrets['LANGCHAIN_API_KEY']
 os.environ["LANGCHAIN_PROJECT"] = st.secrets['LANGCHAIN_PROJECT']
 os.environ["LANGCHAIN_TRACING_V2"] = 'true'
 
+
+DEBUG = False
+
 # Auto-trace LLM calls in-context
-client = wrap_openai(openai.Client())
+# client = wrap_openai(openai.Client())
 smith_client = Client()
 
 
@@ -42,6 +47,9 @@ st.title("📖 Petr-teenbot")
 
 """
 
+if 'run_id' not in st.session_state: 
+    ##TEMP TO TEST CODE -- adding feedback to particular run ! 
+    st.session_state['run_id'] = 
 
 if 'agentState' not in st.session_state: 
     st.session_state['agentState'] = "start"
@@ -89,6 +97,8 @@ if st.session_state['llm_model'] == "gpt-4o":
 
 
 view_messages = st.expander("View the message contents in session state")
+prompt = st.chat_input()
+
 
 # Get an OpenAI API Key before continuing
 if "openai_api_key" in st.secrets:
@@ -115,9 +125,9 @@ conversation = ConversationChain(
     )
 
 
-prompt = st.chat_input()
 
-def getData (): 
+
+def getData (testing = False ): 
     if len(msgs.messages) == 0:
         msgs.add_ai_message("Hi there -- I'm collecting stories about challenging experiences on social media to better understand and support our students. I'd appreciate if you could share your experience with me by answering a few questions. Let me know when you're ready! ")
 
@@ -147,7 +157,7 @@ def getData ():
             st.divider()
             st.chat_message("ai").write("Great, I think I got all I need -- let me summarise this for you:")
             st.session_state.agentState = "summarise"
-            summariseData(msgs)
+            summariseData(testing)
         else:
             st.chat_message("ai").write(response["response"])
 
@@ -156,7 +166,7 @@ def getData ():
         #st.text(st.write(response))
 
 
-def extractChoices(msgs, testing):
+def extractChoices(msgs, testing ):
     extraction_llm = ChatOpenAI(temperature=0.1, model=st.session_state.llm_model, openai_api_key=openai_api_key)
 
     ## taking the prompt from lc_prompts.py file
@@ -176,8 +186,49 @@ def extractChoices(msgs, testing):
 
     return(extractedChoices)
 
+
+def collectFeedback(answer, column_id,  scenario):
+
+    st.session_state.temp_debug = "called collectFeedback"
+    ## not needed for now, but just so we have the opportunity to deal with faces as well 
+    score_mappings = {
+        "thumbs": {"👍": 1, "👎": 0},
+        "faces": {"😀": 1, "🙂": 0.75, "😐": 0.5, "🙁": 0.25, "😞": 0},
+    }
+    scores = score_mappings[answer['type']]
+    
+    # Get the score from the selected feedback option's score mapping
+    score = scores.get(answer['score'])
+
+    run_id = st.session_state['run_id']
+
+    if DEBUG: 
+        st.write(run_id)
+        st.write(answer)
+
+    if score is not None:
+        # Formulate feedback type string incorporating the feedback option
+        # and score value
+        feedback_type_str = f"{answer['type']} {score} {answer['text']} \n {scenario}"
+
+        st.session_state.temp_debug = feedback_type_str
+
+        # Record the feedback with the formulated feedback type string
+        # and optional comment
+        smith_client.create_feedback(
+            run_id= run_id,
+            value = scenario,
+            key = column_id,
+            score=score,
+            comment=answer['text']
+        )
+    else:
+        st.warning("Invalid feedback score.")    
+
+
+
 @traceable # Auto-trace this function
-def summariseData(testing): 
+def summariseData(testing = False): 
     # turn the prompt into a prompt template:
     prompt_template = PromptTemplate.from_template(prompt_one_shot)
 
@@ -199,24 +250,24 @@ def summariseData(testing):
     else:
         answer_set = extractChoices(msgs, False)
     
-    
+    if DEBUG: 
+        st.divider()
+        st.chat_message("ai").write("**DEBUGGING** *-- I think this is a good summary of what you told me ... check if this is correct!*")
+        st.chat_message("ai").json(answer_set)
+
+
+
+
     st.divider()
-    st.chat_message("ai").write("**DEBUGGING** *-- I think this is a good summary of what you told me ... check if this is correct!*")
-    st.chat_message("ai").json(answer_set)
+    st.chat_message("ai").write("Thank you! I'm going to try and summarise what you said in three scenarios. \n See you if you like any of these! ")
 
 
+    ## can't be bothered to stream these, so just showing progress bar 
+    progress_text = 'Processing your scenarios'
+    bar = st.progress(0, text = progress_text)
 
 
-
-
-    #set_debug(True)
-    # try to get two different responses, each using a slightly different prompt
-    st.divider()
-    st.chat_message("ai").write("I'm going to try and summarise what you said in three scenarios. \n See you if you like any of these! ")
-
-    col1, col2, col3 = st.columns(3)
-
-    response_1 = chain.invoke({
+    st.session_state.response_1 = chain.invoke({
         "main_prompt" : prompt_1,
         "end_prompt" : end_prompt,
         "example_what" : example_set['what'],
@@ -229,11 +280,11 @@ def summariseData(testing):
         "outcome" : answer_set['outcome'],
         "reaction" : answer_set['reaction']
     })
-    with col1: 
-        st.header("Scenario 1") 
-        st.write(response_1['output_scenario'])
+    run_1 = get_current_run_tree()
 
-    response_2 = chain.invoke({
+    bar.progress(33, progress_text)
+
+    st.session_state.response_2 = chain.invoke({
         "main_prompt" : prompt_2,
         "end_prompt" : end_prompt,
         "example_what" : example_set['what'],
@@ -246,15 +297,11 @@ def summariseData(testing):
         "outcome" : answer_set['outcome'],
         "reaction" : answer_set['reaction']
     })
+    run_2 = get_current_run_tree()
 
-    with col2: 
-        st.header("Scenario 2") 
-        st.write(response_2['output_scenario'])
+    bar.progress(66, progress_text)
 
-    
-    # st.chat_message("ai").write("**Scenario 2:**  " +response_2['output_scenario'])
-
-    response_3 = chain.invoke({
+    st.session_state.response_3 = chain.invoke({
         "main_prompt" : prompt_3,
         "end_prompt" : end_prompt,
         "example_what" : example_set['what'],
@@ -267,47 +314,27 @@ def summariseData(testing):
         "outcome" : answer_set['outcome'],
         "reaction" : answer_set['reaction']
     })
+    run_3 = get_current_run_tree()
 
-    # st.chat_message("ai").write("**Scenario 3:**  " + response_3['output_scenario'])
-    with col3: 
-        st.header("Scenario 3") 
-        st.write(response_3['output_scenario'])
-  
+    bar.progress(99, progress_text)
+
+    # remove the progress bar
+    bar.empty()
+
+    if DEBUG: 
+        st.session_state.run_collection = {
+            "run1": run_1,
+            "run2": run_2,
+            "run3": run_3
+        }
+
+    ## update the correct run ID -- all three calls share the same one. 
+    st.session_state.run_id = run_1.id
+
+    ## set the next target
     st.session_state["agentState"] = "review"
 
-    reviewData()
-
-
-def collectFeedback(run_id, column, fb_score, scenario, fb_text = "", feedback_option = "thumbs"):
-
-    ## not needed for now, but just so we have the opportunity to deal with faces as well 
-    score_mappings = {
-        "thumbs": {"👍": 1, "👎": 0},
-        "faces": {"😀": 1, "🙂": 0.75, "😐": 0.5, "🙁": 0.25, "😞": 0},
-    }
-    scores = score_mappings[feedback_option]
-    
-    # Get the score from the selected feedback option's score mapping
-    score = scores.get(fb_score)
-
-    if score is not None:
-        # Formulate feedback type string incorporating the feedback option
-        # and score value
-        feedback_type_str = f"{feedback_option} {score}"
-
-        run_id = run_id + column
-        # Record the feedback with the formulated feedback type string
-        # and optional comment
-        feedback_record = smith_client.create_feedback(
-            run_id = run_id,
-            value = feedback_type_str,
-            key = "testingKey",
-            score=score,
-            comment=fb_text,
-        )
-    else:
-        st.warning("Invalid feedback score.")    
-
+    reviewData(False)
 
 def testing_reviewSetUp():
     ## setting up testing code -- will likely be pulled out into a different procedure 
@@ -320,108 +347,160 @@ def testing_reviewSetUp():
     }
 
 
-
-
-    col1, col2, col3 = st.columns(3)
-    
     with col1: 
         st.header("Scenario 1") 
         st.write(text_scenarios['s1'])
-        # col1_fb = streamlit_feedback(
-        #     feedback_type="thumbs",
-        #     optional_text_label="[Optional] Please provide an explanation",
-        #     align='center',
-        #     key="col1_fb",
-        #     on_submit = st.write(),
-        #     args = 
-        # )
+        st.session_state.col1_fb = streamlit_feedback(
+            feedback_type="thumbs",
+            optional_text_label="[Optional] Please provide an explanation",
+            align='center',
+            key="col1_fb",
+            on_submit = collectFeedback,
+            args = ('col1', text_scenarios['s1'])
+        )
 
     with col2: 
         st.header("Scenario 2") 
         st.write(text_scenarios['s2'])
+        st.session_state.col2_fb = streamlit_feedback(
+            feedback_type="thumbs",
+            optional_text_label="[Optional] Please provide an explanation",
+            align='center',
+            key="col2_fb",
+            on_submit = collectFeedback,
+            args = ('col2', text_scenarios['s2'])
+        )        
     
     with col3: 
         st.header("Scenario 3") 
         st.write(text_scenarios['s3'])
+        st.session_state.col3_fb = streamlit_feedback(
+            feedback_type="thumbs",
+            optional_text_label="[Optional] Please provide an explanation",
+            align='center',
+            key="col3_fb",
+            on_submit = collectFeedback,
+            args = ('col3', text_scenarios['s3'])
+        )        
+
+def test_call(answer, key, *args, **kwargs):
+    
+    if st.session_state[key]:
+        answer = st.session_state[key]
+        st.write(answer)
+
+        st.write("answer:", answer)
+        st.write("key:", key)
+        st.write("*args:", args)
+        st.write("**kwargs:", kwargs)
 
 
+    else: 
+        st.write("feedback not available")
+
+    
 
 def reviewData(testing):
 
-    ## If we're testing, the previous functions have set up the three column structure yet and we don't have scenarios. 
+    ## If we're testing this function, the previous functions have set up the three column structure yet and we don't have scenarios. 
     ## --> we will set these up now. 
-    if testing:
-        testing_reviewSetUp()
 
+    ## testing function got broken ... didn't fix yet.  
+
+    col1, col2, col3 = st.columns(3)
+    
+    ## check if we had any feedback before:
+    ## set up a dictionary:
+    disable = {
+        'col1_fb': None,
+        'col2_fb': None,
+        'col3_fb': None,
+    }
+    ## grab any answers we already have:
+    for col in ['col1_fb','col2_fb','col3_fb']:
+        if col in st.session_state and st.session_state[col] is not None:
+            
+            if DEBUG: 
+                st.write(col)
+                st.write("Feeedback 1:", st.session_state[col]['score'])
+            
+            # update the corresponding entry in the disable dict
+            disable[col] = st.session_state[col]['score']
+
+
+    with col1: 
+        st.header("Scenario 1") 
+        st.write(st.session_state.response_1['output_scenario'])
+        col1_fb = streamlit_feedback(
+            feedback_type="thumbs",
+            optional_text_label="[Optional] Please provide an explanation",
+            align='center',
+            key="col1_fb",
+            # this ensures that feedback cannot be submitted twice 
+            disable_with_score = disable['col1_fb'],
+            on_submit = collectFeedback,
+            args = ('col1',
+                    st.session_state.response_1['output_scenario']
+                    )
+        )
+
+    with col2: 
+        st.header("Scenario 2") 
+        st.write(st.session_state.response_2['output_scenario'])
+        col2_fb = streamlit_feedback(
+            feedback_type="thumbs",
+            optional_text_label="[Optional] Please provide an explanation",
+            align='center',
+            key="col2_fb",
+            disable_with_score = disable['col2_fb'],            
+            on_submit = collectFeedback,
+            args = ('col2', 
+                    st.session_state.response_2['output_scenario']
+                    )
+        )        
+    
+    with col3: 
+        st.header("Scenario 3") 
+        st.write(st.session_state.response_3['output_scenario'])
+        col3_fb = streamlit_feedback(
+            feedback_type="thumbs",
+            optional_text_label="[Optional] Please provide an explanation",
+            align='center',
+            key="col3_fb",
+            disable_with_score = disable['col3_fb'],            
+            on_submit = collectFeedback,
+            args = ('col3', 
+                    st.session_state.response_3['output_scenario']
+                    )
+        )   
 
 
     ## now we should have col1, col2, col3 with text available -- let's set up the infrastructure. 
     st.divider()
 
-
-        
-
-    ## keeping two options of score mapping as an example -- will only work with thumbs for now. 
-    score_mappings = {
-        "thumbs": {"👍": 1, "👎": 0},
-        "faces": {"😀": 1, "🙂": 0.75, "😐": 0.5, "🙁": 0.25, "😞": 0},
-    }
-
-    feedback_option = "thumbs"
-
-    scores = score_mappings[feedback_option]
-  
-    feedback = streamlit_feedback(
-        feedback_type=feedback_option,
-        optional_text_label="[Optional] Please provide an explanation",
-        key="feedback",
-    )
-
-   
-    if feedback:
-        # Get the score from the selected feedback option's score mapping
-        score = scores.get(feedback["score"])
-
-        if score is not None:
-            # Formulate feedback type string incorporating the feedback option
-            # and score value
-            feedback_type_str = f"{feedback_option} {feedback['score']}"
-
-            run_id = str(uuid.uuid4())
-            # Record the feedback with the formulated feedback type string
-            # and optional comment
-            feedback_record = smith_client.create_feedback(
-                run_id = run_id,
-                value = feedback_type_str,
-                key = "testingKey",
-                score=score,
-                comment=feedback.get("text"),
-            )
-            st.session_state.feedback_result = {
-                "feedback_comment": str(feedback_record.id),
-                "score": score
-            }
-        else:
-            st.warning("Invalid feedback score.")
-
+    st.chat_message("ai").write("Please have a look at the scenarios above and pick one you like the most! Feel free to also share feedback to the system using 👍 and 👎.")
      
-
-
-    st.chat_message("ai").write("** All done! **  \n *We will be implementing the review & adapt functions next. Please reload the page to restart *")
+    if DEBUG:
+        st.write("run ID", st.session_state['run_id'])
+        if 'temp_debug' not in st.session_state:
+            st.write("no debug found")
+        else:
+            st.write("debug feedback", st.session_state.temp_debug)
     # If user inputs a new prompt, generate and draw a new response
 
-
+    st.button 
 
 
 
 def stateAgent(): 
+    testing = True
 ### make choice of the right 'agent': 
     if st.session_state['agentState'] == 'start':
-            # getData()
-            # summariseData(msgs)
-            reviewData(True)
+            # getData(False)
+            summariseData(testing)
+            # reviewData(True)
     elif st.session_state['agentState'] == 'summarise':
-            summariseData(msgs)
+            summariseData(testing)
     elif st.session_state['agentState'] == 'review':
             reviewData(False)
 
