@@ -6,16 +6,23 @@ from langchain_core.prompts import PromptTemplate
 from langchain.chains import ConversationChain
 from langchain.chat_models import ChatOpenAI
 from langchain.output_parsers.json import SimpleJsonOutputParser
+from langchain.callbacks.streamlit import StreamlitCallbackHandler
 import openai
 from langsmith.wrappers import wrap_openai
 from langsmith import traceable
+from langsmith import Client
+from streamlit_feedback import streamlit_feedback
+import uuid
+
 import os
+
 import streamlit as st
 
 
 ## import our prompts: 
 
 from lc_prompts import *
+from testing_prompts import * 
 
 
 os.environ["OPENAI_API_KEY"] = st.secrets['OPENAI_API_KEY']
@@ -25,6 +32,7 @@ os.environ["LANGCHAIN_TRACING_V2"] = 'true'
 
 # Auto-trace LLM calls in-context
 client = wrap_openai(openai.Client())
+smith_client = Client()
 
 
 st.set_page_config(page_title="Petr-bot", page_icon="📖")
@@ -51,13 +59,16 @@ memory = ConversationBufferMemory(memory_key="history", chat_memory=msgs)
 
 selections = st.sidebar
 
+## removing this option for now. 
+# selections.markdown("## Feedback Scale")
+# feedback_option = (
+#     "thumbs" if st.sidebar.toggle(label="`Faces` ⇄ `Thumbs`", value=False) else "faces"
+# )
 
 with selections:
-    st.write("""**LLM model selection:**
-                Different models have widely differing costs.   \n \n  It seems that running this whole flow with chatGPT 4 costs about $0.1 per full flow as there are multiple processing steps 👻; while the 3.5-turbo is about 100x cheaper 🤑 and gpt-4o is about 6x cheaper (I think).  
-                """
-                )
-    st.write('**Our prompts are currently set up for gpt-4 so you might want to run your first trial with that** ... however, multiple runs might be good to with some of the cheaper models.')
+    st.markdown("## LLM model selection")
+    st.markdown(":blue[Different models have widely differing costs.   \n \n  It seems that running this whole flow with chatGPT 4 costs about $0.1 per full flow as there are multiple processing steps 👻; while the 3.5-turbo is about 100x cheaper 🤑 and gpt-4o is about 6x cheaper (I think).]")
+    st.markdown('**Our prompts are currently set up for gpt-4 so you might want to run your first trial with that** ... however, multiple runs might be good to with some of the cheaper models.')
     
 
     st.session_state.llm_model = st.selectbox(
@@ -145,54 +156,28 @@ def getData ():
         #st.text(st.write(response))
 
 
-def extractChoices(msgs):
+def extractChoices(msgs, testing):
     extraction_llm = ChatOpenAI(temperature=0.1, model=st.session_state.llm_model, openai_api_key=openai_api_key)
 
-    ## now should be added into the lc_prompts.py
-    # extraction_prompt = """You are an expert extraction algorithm. 
-    #         Only extract relevant information from the text, using only the words and phrases that the text contains. 
-    #         If you do not know the value of an attribute asked to extract, 
-    #         return null for the attribute's value. 
-
-    #         You will output a JSON with `what`, `context`, `outcome` and `reaction` keys. 
-
-    #         These correspond to the following questions 
-    #         1. What happened? 
-    #         2. What's the context? 
-    #         3. What was wrong? 
-    #         4. What did it make you do?
-            
-    #         Message to date: {conversation_history}
-
-    #         Remember, only extract text that is in the messages above and do not change it. 
-    # """
-
+    ## taking the prompt from lc_prompts.py file
     extraction_template = PromptTemplate(input_variables=["conversation_history"], template = extraction_prompt)
+
+    ## set up the rest of the chain including the json parser we will need. 
     json_parser = SimpleJsonOutputParser()
-    extractionChain = extraction_template |extraction_llm | json_parser
+    extractionChain = extraction_template | extraction_llm | json_parser
 
-    test_messages = """
-        AI: Hi there -- welcome to the data collection bot! Let me know when you're ready! 
-        Human: Hi I'm read
-        AI: Great! Let's start. Can you tell me about a time when something happened on social media that was difficult for you? Specifically, what was said, posted, or done?
-        Human: Posted something online about struggling to learn how to code in langchain and my phd students and postdocs just laughted at me!  
-        AI: I'm really sorry to hear that you had to go through that. It's not easy when people we look up to react in a way that's less than supportive. Can you give me a bit more context about the situation? Was there any prior conversation or incident that led to this?
-        Human: not really, but I have been talking to them excessively about how important it is to learn how to code
-        AI: I see, so it sounds like this was something you've been passionate about and have been discussing a lot. Now, can you tell me more about why this was wrong? How did their laughter make you feel and what harm do you think was done?
-        Human: wasn't great -- kind of angry and embarrased if you must know!
-        AI: I can understand how that would make you feel both angry and embarrassed. It's not easy to put yourself out there, especially when it comes to learning new things. Finally, how did you react to this situation? What did it make you do?
-        Human: I was just really miffed -- I obviously I let all the postdocs go and re-advertised their positions, and explained to the phds that this is not appropriate reaction to my coding struggles. 
-        AI: Great, I think I got all I need, let me summarise this for you. 
-    """
     
-
-    extractedChoices = extractionChain.invoke({"conversation_history" : msgs})
-    # extractedChoices = extractionChain.invoke({"conversation_history" : test_messages})
+    # allow for testing with pre-coded messages -- see testing_prompts.py
+    if testing:
+        extractedChoices = extractionChain.invoke({"conversation_history" : test_messages})
+    else: 
+        extractedChoices = extractionChain.invoke({"conversation_history" : msgs})
+    
 
     return(extractedChoices)
 
 @traceable # Auto-trace this function
-def summariseData(content): 
+def summariseData(testing): 
     # turn the prompt into a prompt template:
     prompt_template = PromptTemplate.from_template(prompt_one_shot)
 
@@ -209,7 +194,11 @@ def summariseData(content):
     end_prompt = end_prompt_core
 
     ### NEED TO EXTRACT THE CHOICES:
-    answer_set = extractChoices(msgs)
+    if testing: 
+        answer_set = extractChoices(msgs, True)
+    else:
+        answer_set = extractChoices(msgs, False)
+    
     
     st.divider()
     st.chat_message("ai").write("**DEBUGGING** *-- I think this is a good summary of what you told me ... check if this is correct!*")
@@ -225,6 +214,8 @@ def summariseData(content):
     st.divider()
     st.chat_message("ai").write("I'm going to try and summarise what you said in three scenarios. \n See you if you like any of these! ")
 
+    col1, col2, col3 = st.columns(3)
+
     response_1 = chain.invoke({
         "main_prompt" : prompt_1,
         "end_prompt" : end_prompt,
@@ -238,7 +229,9 @@ def summariseData(content):
         "outcome" : answer_set['outcome'],
         "reaction" : answer_set['reaction']
     })
-    st.chat_message("ai").write("**Scenario 1:**  " + response_1['output_scenario'])
+    with col1: 
+        st.header("Scenario 1") 
+        st.write(response_1['output_scenario'])
 
     response_2 = chain.invoke({
         "main_prompt" : prompt_2,
@@ -254,8 +247,12 @@ def summariseData(content):
         "reaction" : answer_set['reaction']
     })
 
+    with col2: 
+        st.header("Scenario 2") 
+        st.write(response_2['output_scenario'])
+
     
-    st.chat_message("ai").write("**Scenario 2:**  " +response_2['output_scenario'])
+    # st.chat_message("ai").write("**Scenario 2:**  " +response_2['output_scenario'])
 
     response_3 = chain.invoke({
         "main_prompt" : prompt_3,
@@ -271,39 +268,162 @@ def summariseData(content):
         "reaction" : answer_set['reaction']
     })
 
-    st.chat_message("ai").write("**Scenario 3:**  " + response_3['output_scenario'])
+    # st.chat_message("ai").write("**Scenario 3:**  " + response_3['output_scenario'])
+    with col3: 
+        st.header("Scenario 3") 
+        st.write(response_3['output_scenario'])
   
     st.session_state["agentState"] = "review"
 
     reviewData()
+
+
+def collectFeedback(run_id, column, fb_score, scenario, fb_text = "", feedback_option = "thumbs"):
+
+    ## not needed for now, but just so we have the opportunity to deal with faces as well 
+    score_mappings = {
+        "thumbs": {"👍": 1, "👎": 0},
+        "faces": {"😀": 1, "🙂": 0.75, "😐": 0.5, "🙁": 0.25, "😞": 0},
+    }
+    scores = score_mappings[feedback_option]
     
+    # Get the score from the selected feedback option's score mapping
+    score = scores.get(fb_score)
+
+    if score is not None:
+        # Formulate feedback type string incorporating the feedback option
+        # and score value
+        feedback_type_str = f"{feedback_option} {score}"
+
+        run_id = run_id + column
+        # Record the feedback with the formulated feedback type string
+        # and optional comment
+        feedback_record = smith_client.create_feedback(
+            run_id = run_id,
+            value = feedback_type_str,
+            key = "testingKey",
+            score=score,
+            comment=fb_text,
+        )
+    else:
+        st.warning("Invalid feedback score.")    
 
 
-def reviewData():
+def testing_reviewSetUp():
+    ## setting up testing code -- will likely be pulled out into a different procedure 
+    text_scenarios = {
+        "s1" : "So, here's the deal. I've been really trying to get my head around this coding thing, specifically in langchain. I thought I'd share my struggle online, hoping for some support or advice. But guess what? My PhD students and postdocs, the very same people I've been telling how crucial it is to learn coding, just laughed at me! Can you believe it? It made me feel super ticked off and embarrassed. I mean, who needs that kind of negativity, right? So, I did what I had to do. I let all the postdocs go, re-advertised their positions, and had a serious chat with the PhDs about how uncool their reaction was to my coding struggles.",
+
+        "s2": "So, here's the thing. I've been trying to learn this coding thing called langchain, right? It's been a real struggle, so I decided to share my troubles online. I thought my phd students and postdocs would understand, but instead, they just laughed at me! Can you believe that? After all the times I've told them how important it is to learn how to code. It made me feel really mad and embarrassed, you know? So, I did what I had to do. I told the postdocs they were out and had to re-advertise their positions. And I had a serious talk with the phds, telling them that laughing at my coding struggles was not cool at all.",
+
+        "s3": "So, here's the deal. I've been trying to learn this coding language called langchain, right? And it's been a real struggle. So, I decided to post about it online, hoping for some support or advice. But guess what? My PhD students and postdocs, the same people I've been telling how important it is to learn coding, just laughed at me! Can you believe it? I was so ticked off and embarrassed. I mean, who does that? So, I did what any self-respecting person would do. I fired all the postdocs and re-advertised their positions. And for the PhDs? I had a serious talk with them about how uncool their reaction was to my coding struggles."
+    }
+
+
+
+
+    col1, col2, col3 = st.columns(3)
+    
+    with col1: 
+        st.header("Scenario 1") 
+        st.write(text_scenarios['s1'])
+        # col1_fb = streamlit_feedback(
+        #     feedback_type="thumbs",
+        #     optional_text_label="[Optional] Please provide an explanation",
+        #     align='center',
+        #     key="col1_fb",
+        #     on_submit = st.write(),
+        #     args = 
+        # )
+
+    with col2: 
+        st.header("Scenario 2") 
+        st.write(text_scenarios['s2'])
+    
+    with col3: 
+        st.header("Scenario 3") 
+        st.write(text_scenarios['s3'])
+
+
+
+def reviewData(testing):
+
+    ## If we're testing, the previous functions have set up the three column structure yet and we don't have scenarios. 
+    ## --> we will set these up now. 
+    if testing:
+        testing_reviewSetUp()
+
+
+
+    ## now we should have col1, col2, col3 with text available -- let's set up the infrastructure. 
     st.divider()
 
-    text_scenarios = [
-        "Scenario 1: So, here's the deal. I've been really trying to get my head around this coding thing, specifically in langchain. I thought I'd share my struggle online, hoping for some support or advice. But guess what? My PhD students and postdocs, the very same people I've been telling how crucial it is to learn coding, just laughed at me! Can you believe it? It made me feel super ticked off and embarrassed. I mean, who needs that kind of negativity, right? So, I did what I had to do. I let all the postdocs go, re-advertised their positions, and had a serious chat with the PhDs about how uncool their reaction was to my coding struggles.",
 
-        "Scenario 2: So, here's the thing. I've been trying to learn this coding thing called langchain, right? It's been a real struggle, so I decided to share my troubles online. I thought my phd students and postdocs would understand, but instead, they just laughed at me! Can you believe that? After all the times I've told them how important it is to learn how to code. It made me feel really mad and embarrassed, you know? So, I did what I had to do. I told the postdocs they were out and had to re-advertise their positions. And I had a serious talk with the phds, telling them that laughing at my coding struggles was not cool at all.",
+        
 
-        "Scenario 3: So, here's the deal. I've been trying to learn this coding language called langchain, right? And it's been a real struggle. So, I decided to post about it online, hoping for some support or advice. But guess what? My PhD students and postdocs, the same people I've been telling how important it is to learn coding, just laughed at me! Can you believe it? I was so ticked off and embarrassed. I mean, who does that? So, I did what any self-respecting person would do. I fired all the postdocs and re-advertised their positions. And for the PhDs? I had a serious talk with them about how uncool their reaction was to my coding struggles."
-    ]
+    ## keeping two options of score mapping as an example -- will only work with thumbs for now. 
+    score_mappings = {
+        "thumbs": {"👍": 1, "👎": 0},
+        "faces": {"😀": 1, "🙂": 0.75, "😐": 0.5, "🙁": 0.25, "😞": 0},
+    }
+
+    feedback_option = "thumbs"
+
+    scores = score_mappings[feedback_option]
+  
+    feedback = streamlit_feedback(
+        feedback_type=feedback_option,
+        optional_text_label="[Optional] Please provide an explanation",
+        key="feedback",
+    )
+
+   
+    if feedback:
+        # Get the score from the selected feedback option's score mapping
+        score = scores.get(feedback["score"])
+
+        if score is not None:
+            # Formulate feedback type string incorporating the feedback option
+            # and score value
+            feedback_type_str = f"{feedback_option} {feedback['score']}"
+
+            run_id = str(uuid.uuid4())
+            # Record the feedback with the formulated feedback type string
+            # and optional comment
+            feedback_record = smith_client.create_feedback(
+                run_id = run_id,
+                value = feedback_type_str,
+                key = "testingKey",
+                score=score,
+                comment=feedback.get("text"),
+            )
+            st.session_state.feedback_result = {
+                "feedback_comment": str(feedback_record.id),
+                "score": score
+            }
+        else:
+            st.warning("Invalid feedback score.")
+
+     
+
 
     st.chat_message("ai").write("** All done! **  \n *We will be implementing the review & adapt functions next. Please reload the page to restart *")
     # If user inputs a new prompt, generate and draw a new response
 
 
 
+
+
 def stateAgent(): 
 ### make choice of the right 'agent': 
     if st.session_state['agentState'] == 'start':
-            getData()
+            # getData()
             # summariseData(msgs)
+            reviewData(True)
     elif st.session_state['agentState'] == 'summarise':
             summariseData(msgs)
     elif st.session_state['agentState'] == 'review':
-            reviewData()
+            reviewData(False)
 
 
 
