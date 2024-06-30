@@ -49,7 +49,7 @@ st.title("📖 Petr-teenbot")
 
 if 'run_id' not in st.session_state: 
     ##TEMP TO TEST CODE -- adding feedback to particular run ! 
-    st.session_state['run_id'] = 
+    st.session_state['run_id'] = None
 
 if 'agentState' not in st.session_state: 
     st.session_state['agentState'] = "start"
@@ -97,6 +97,7 @@ if st.session_state['llm_model'] == "gpt-4o":
 
 
 view_messages = st.expander("View the message contents in session state")
+entry_messages = st.container()
 prompt = st.chat_input()
 
 
@@ -144,22 +145,24 @@ def getData (testing = False ):
 
     for msg in last_two_messages:
         if msg.type == "ai":
-            st.chat_message(msg.type).write(msg.content)
+            with entry_messages:
+                st.chat_message(msg.type).write(msg.content)
 
 
     # If user inputs a new prompt, generate and draw a new response
     if prompt:
-        st.chat_message("human").write(prompt)
-        # Note: new messages are saved to history automatically by Langchain during run
-        response = conversation.invoke(input = prompt)
-        print(response)
-        if "FINISHED" in response['response']:
-            st.divider()
-            st.chat_message("ai").write("Great, I think I got all I need -- let me summarise this for you:")
-            st.session_state.agentState = "summarise"
-            summariseData(testing)
-        else:
-            st.chat_message("ai").write(response["response"])
+        with entry_messages:
+            st.chat_message("human").write(prompt)
+            # Note: new messages are saved to history automatically by Langchain during run
+            response = conversation.invoke(input = prompt)
+            print(response)
+            if "FINISHED" in response['response']:
+                st.divider()
+                st.chat_message("ai").write("Great, I think I got all I need -- let me summarise this for you:")
+                st.session_state.agentState = "summarise"
+                summariseData(testing)
+            else:
+                st.chat_message("ai").write(response["response"])
 
  
         
@@ -258,13 +261,14 @@ def summariseData(testing = False):
 
 
 
-    st.divider()
-    st.chat_message("ai").write("Thank you! I'm going to try and summarise what you said in three scenarios. \n See you if you like any of these! ")
+    with entry_messages:
+        st.divider()
+        st.chat_message("ai").write("Thank you! I'm going to try and summarise what you said in three scenarios. \n See you if you like any of these! ")
 
 
-    ## can't be bothered to stream these, so just showing progress bar 
-    progress_text = 'Processing your scenarios'
-    bar = st.progress(0, text = progress_text)
+        ## can't be bothered to stream these, so just showing progress bar 
+        progress_text = 'Processing your scenarios'
+        bar = st.progress(0, text = progress_text)
 
 
     st.session_state.response_1 = chain.invoke({
@@ -337,6 +341,8 @@ def summariseData(testing = False):
     reviewData(False)
 
 def testing_reviewSetUp():
+    ## DEPRECATED -- DOES NOT WORK AT THIS POINT
+
     ## setting up testing code -- will likely be pulled out into a different procedure 
     text_scenarios = {
         "s1" : "So, here's the deal. I've been really trying to get my head around this coding thing, specifically in langchain. I thought I'd share my struggle online, hoping for some support or advice. But guess what? My PhD students and postdocs, the very same people I've been telling how crucial it is to learn coding, just laughed at me! Can you believe it? It made me feel super ticked off and embarrassed. I mean, who needs that kind of negativity, right? So, I did what I had to do. I let all the postdocs go, re-advertised their positions, and had a serious chat with the PhDs about how uncool their reaction was to my coding struggles.",
@@ -345,43 +351,9 @@ def testing_reviewSetUp():
 
         "s3": "So, here's the deal. I've been trying to learn this coding language called langchain, right? And it's been a real struggle. So, I decided to post about it online, hoping for some support or advice. But guess what? My PhD students and postdocs, the same people I've been telling how important it is to learn coding, just laughed at me! Can you believe it? I was so ticked off and embarrassed. I mean, who does that? So, I did what any self-respecting person would do. I fired all the postdocs and re-advertised their positions. And for the PhDs? I had a serious talk with them about how uncool their reaction was to my coding struggles."
     }
-
-
-    with col1: 
-        st.header("Scenario 1") 
-        st.write(text_scenarios['s1'])
-        st.session_state.col1_fb = streamlit_feedback(
-            feedback_type="thumbs",
-            optional_text_label="[Optional] Please provide an explanation",
-            align='center',
-            key="col1_fb",
-            on_submit = collectFeedback,
-            args = ('col1', text_scenarios['s1'])
-        )
-
-    with col2: 
-        st.header("Scenario 2") 
-        st.write(text_scenarios['s2'])
-        st.session_state.col2_fb = streamlit_feedback(
-            feedback_type="thumbs",
-            optional_text_label="[Optional] Please provide an explanation",
-            align='center',
-            key="col2_fb",
-            on_submit = collectFeedback,
-            args = ('col2', text_scenarios['s2'])
-        )        
-    
-    with col3: 
-        st.header("Scenario 3") 
-        st.write(text_scenarios['s3'])
-        st.session_state.col3_fb = streamlit_feedback(
-            feedback_type="thumbs",
-            optional_text_label="[Optional] Please provide an explanation",
-            align='center',
-            key="col3_fb",
-            on_submit = collectFeedback,
-            args = ('col3', text_scenarios['s3'])
-        )        
+    st.session_state.response_1 = {'output_scenario': text_scenarios['s1']}
+    st.session_state.response_2 = {'output_scenario': text_scenarios['s2']}
+    st.session_state.response_3 = {'output_scenario': text_scenarios['s3']}
 
 def test_call(answer, key, *args, **kwargs):
     
@@ -398,14 +370,30 @@ def test_call(answer, key, *args, **kwargs):
     else: 
         st.write("feedback not available")
 
+def click_selection_yes(button_num ):
+    st.write("hurray")
+    st.session_state.scenario_selection = f"🎉🎉 Hurray 🎉🎉\n you've liked Scenario {button_num}"
+
+def click_selection_no(button_num):
+    st.session_state.scenario_selection = f"😬😬 Oh dear 😬😬\n we should re-examine Scenario {button_num}"
+
     
+def scenario_selection (popover, button_num):
+    with popover:
+        st.markdown("Amira / Amy -- let's talk about how this UX should go ;) ")
+        st.markdown("How much do you think the selected scenario fits what you wanted to say?")
+        st.button("great", key = f'yeskey_{button_num}', on_click = click_selection_yes, args = button_num)
+        st.button("not that much", key = f'nokey_{button_num}', on_click = click_selection_no, args = button_num)
+
 
 def reviewData(testing):
 
     ## If we're testing this function, the previous functions have set up the three column structure yet and we don't have scenarios. 
     ## --> we will set these up now. 
+    if testing:
+        testing_reviewSetUp() 
 
-    ## testing function got broken ... didn't fix yet.  
+    entry_messages = st.empty
 
     col1, col2, col3 = st.columns(3)
     
@@ -478,17 +466,30 @@ def reviewData(testing):
     ## now we should have col1, col2, col3 with text available -- let's set up the infrastructure. 
     st.divider()
 
-    st.chat_message("ai").write("Please have a look at the scenarios above and pick one you like the most! Feel free to also share feedback to the system using 👍 and 👎.")
-     
     if DEBUG:
         st.write("run ID", st.session_state['run_id'])
         if 'temp_debug' not in st.session_state:
             st.write("no debug found")
         else:
             st.write("debug feedback", st.session_state.temp_debug)
-    # If user inputs a new prompt, generate and draw a new response
+    
+    ## if we haven't selected scenario, let's give them a choice. 
+    if 'scenario_selection' not in st.session_state:
+        st.chat_message("ai").write("Please have a look at the scenarios above and pick one you like the most! You can use 👍 and 👎 if you want to leave a comment for us on any scenario.")
+     
+        b1,b2,b3 = st.columns(3)
+        p1 = b1.popover('Pick scenario 1', use_container_width=True)
+        p2 = b2.popover('Pick scenario 2', use_container_width=True)
+        p3 = b3.popover('Pick scenario 3', use_container_width=True)
 
-    st.button 
+        scenario_selection(p1,'1') 
+        scenario_selection(p2,'2') 
+        scenario_selection(p3,'3') 
+    ## and if we have, show the answer: 
+    else:
+        st.header(st.session_state['scenario_selection'])
+        
+        
 
 
 
@@ -497,8 +498,8 @@ def stateAgent():
 ### make choice of the right 'agent': 
     if st.session_state['agentState'] == 'start':
             # getData(False)
-            summariseData(testing)
-            # reviewData(True)
+            # summariseData(testing)
+            reviewData(testing)
     elif st.session_state['agentState'] == 'summarise':
             summariseData(testing)
     elif st.session_state['agentState'] == 'review':
