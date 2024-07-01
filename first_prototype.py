@@ -214,7 +214,7 @@ def collectFeedback(answer, column_id,  scenario):
 
         st.session_state.temp_debug = feedback_type_str
 
-        payload = f'{scenario} \n based on: \n {answer_set}'
+        payload = f'{answer['score']} rating scenario: \n {scenario} \n Based on: \n {answer_set}'
 
         # Record the feedback with the formulated feedback type string
         # and optional comment
