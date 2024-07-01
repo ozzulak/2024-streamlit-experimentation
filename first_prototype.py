@@ -158,7 +158,7 @@ def getData (testing = False ):
             print(response)
             if "FINISHED" in response['response']:
                 st.divider()
-                st.chat_message("ai").write("Great, I think I got all I need -- let me summarise this for you:")
+                st.chat_message("ai").write("Great, I think I got all I need -- but let me double check!")
                 st.session_state.agentState = "summarise"
                 summariseData(testing)
             else:
@@ -230,7 +230,7 @@ def collectFeedback(answer, column_id,  scenario):
 
 
 
-@traceable # Auto-trace this function
+
 def summariseData(testing = False): 
     # turn the prompt into a prompt template:
     prompt_template = PromptTemplate.from_template(prompt_one_shot)
@@ -263,7 +263,7 @@ def summariseData(testing = False):
 
     with entry_messages:
         st.divider()
-        st.chat_message("ai").write("Thank you! I'm going to try and summarise what you said in three scenarios. \n See you if you like any of these! ")
+        st.chat_message("ai").write("Seems I have everything! Let me try to summarise what you said in three scenarios. \n See you if you like any of these! ")
 
 
         ## can't be bothered to stream these, so just showing progress bar 
@@ -338,7 +338,7 @@ def summariseData(testing = False):
     ## set the next target
     st.session_state["agentState"] = "review"
 
-    reviewData(False)
+    st.rerun()
 
 def testing_reviewSetUp():
     ## DEPRECATED -- DOES NOT WORK AT THIS POINT
@@ -380,11 +380,12 @@ def click_selection_no(button_num):
     
 def scenario_selection (popover, button_num):
     with popover:
-        st.markdown("Amira / Amy -- let's talk about how this UX should go ;) ")
+        st.header("@Amira / @Amy -- let's talk about how this UX should go properly")
         st.markdown("How much do you think the selected scenario fits what you wanted to say?")
-        st.button("great", key = f'yeskey_{button_num}', on_click = click_selection_yes, args = button_num)
-        st.button("not that much", key = f'nokey_{button_num}', on_click = click_selection_no, args = button_num)
 
+        c1, c2 = st.columns(2)
+        c1.button("great 😂", key = f'yeskey_{button_num}', on_click = click_selection_yes, args = button_num)
+        c2.button("not that much 🤨", key = f'nokey_{button_num}', on_click = click_selection_no, args = button_num)
 
 def reviewData(testing):
 
@@ -492,14 +493,14 @@ def reviewData(testing):
         
 
 
-
+@traceable # Auto-trace this function
 def stateAgent(): 
-    testing = True
+    testing = False
 ### make choice of the right 'agent': 
     if st.session_state['agentState'] == 'start':
-            # getData(False)
+            getData(False)
             # summariseData(testing)
-            reviewData(testing)
+            # reviewData(testing)
     elif st.session_state['agentState'] == 'summarise':
             summariseData(testing)
     elif st.session_state['agentState'] == 'review':
