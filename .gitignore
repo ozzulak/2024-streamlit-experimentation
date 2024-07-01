@@ -25,3 +25,6 @@ Thumbs.db
 
 # Ignore any environment configuration files
 .env
+
+## ignore any tracing files! 
+ls_*
