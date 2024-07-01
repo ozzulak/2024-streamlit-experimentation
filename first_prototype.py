@@ -230,7 +230,7 @@ def collectFeedback(answer, column_id,  scenario):
 
 
 
-
+@traceable # Auto-trace this function
 def summariseData(testing = False): 
     # turn the prompt into a prompt template:
     prompt_template = PromptTemplate.from_template(prompt_one_shot)
@@ -493,7 +493,7 @@ def reviewData(testing):
         
 
 
-@traceable # Auto-trace this function
+
 def stateAgent(): 
     testing = False
 ### make choice of the right 'agent': 
