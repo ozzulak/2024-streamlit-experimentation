@@ -6,13 +6,11 @@ from langchain_core.prompts import PromptTemplate
 from langchain.chains import ConversationChain
 from langchain.chat_models import ChatOpenAI
 from langchain.output_parsers.json import SimpleJsonOutputParser
-import openai
-from langsmith.wrappers import wrap_openai
 from langsmith import Client
 from langsmith import traceable
 from langsmith.run_helpers import get_current_run_tree
 from streamlit_feedback import streamlit_feedback
-import uuid
+
 from functools import partial
 
 import os
@@ -216,11 +214,13 @@ def collectFeedback(answer, column_id,  scenario):
 
         st.session_state.temp_debug = feedback_type_str
 
+        payload = f'{scenario} \n based on: \n {answer_set}'
+
         # Record the feedback with the formulated feedback type string
         # and optional comment
         smith_client.create_feedback(
             run_id= run_id,
-            value = scenario,
+            value = payload,
             key = column_id,
             score=score,
             comment=answer['text']
@@ -258,7 +258,7 @@ def summariseData(testing = False):
         st.chat_message("ai").write("**DEBUGGING** *-- I think this is a good summary of what you told me ... check if this is correct!*")
         st.chat_message("ai").json(answer_set)
 
-
+    st.session_state['answer_set'] = answer_set
 
 
     with entry_messages:
@@ -338,7 +338,8 @@ def summariseData(testing = False):
     ## set the next target
     st.session_state["agentState"] = "review"
 
-    st.rerun()
+    reviewData(False)
+    #st.rerun() 
 
 def testing_reviewSetUp():
     ## DEPRECATED -- DOES NOT WORK AT THIS POINT
@@ -387,6 +388,8 @@ def scenario_selection (popover, button_num):
         c1.button("great 😂", key = f'yeskey_{button_num}', on_click = click_selection_yes, args = button_num)
         c2.button("not that much 🤨", key = f'nokey_{button_num}', on_click = click_selection_no, args = button_num)
 
+
+
 def reviewData(testing):
 
     ## If we're testing this function, the previous functions have set up the three column structure yet and we don't have scenarios. 
@@ -394,8 +397,13 @@ def reviewData(testing):
     if testing:
         testing_reviewSetUp() 
 
-    entry_messages = st.empty
+    ## ensuring we can clear the screen first time we enter reviewData!
+    if 'reviewing' not in st.session_state:
+        st.session_state['reviewing'] = True
+        st.rerun()
 
+
+    # setting up space for the scenarios 
     col1, col2, col3 = st.columns(3)
     
     ## check if we had any feedback before:
@@ -504,7 +512,7 @@ def stateAgent():
     elif st.session_state['agentState'] == 'summarise':
             summariseData(testing)
     elif st.session_state['agentState'] == 'review':
-            reviewData(False)
+            reviewData(testing)
 
 
 
