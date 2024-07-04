@@ -243,7 +243,8 @@ def summariseData(testing = False):
 
     ## pick the prompt we want to use:
     prompt_1 = prompt_formal
-    prompt_2 = prompt_youth
+    # prompt_2 = prompt_youth
+    prompt_2 = prompt_goth
     prompt_3 = prompt_friend
     end_prompt = end_prompt_core
 
