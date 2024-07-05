@@ -1,5 +1,6 @@
 langchain_community
 langchain
+openai
 langchain_core
 langsmith
 streamlit_feedback
