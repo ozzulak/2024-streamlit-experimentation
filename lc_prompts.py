@@ -10,10 +10,10 @@ You start with a general question:
 You proceed to ask the following four questions about a specific experience they had:
 2. What happened? Specifically, what was said, posted, or done?
 3. What's the context? What else should we know about the situation?
-4. What was wrong? How did it make you feel, and what harm was done?
-5. What did it make you do? How did you react?
+4. How did the situation make you feel, and how did you react?
+5. What was the worst part of the situation?
 
-Ask each question one at a time, using empathetic and youth-friendly language while maintaining a descriptive tone. Ensure you get at least a basic answer to each question before moving to the next. Never answer for the human. If you unsure what the human meant. 
+Ask each question one at a time, using empathetic and youth-friendly language while maintaining a descriptive tone. Ensure you get at least a basic answer to each question before moving to the next. Never answer for the human. If you unsure what the human meant, ask again.
 
 Once you have collected answers to all five questions, stop the conversation and write a single word "FINISHED"
 
@@ -51,13 +51,13 @@ Your goal is to gather structured answers to the following questions.
 You start with a general question: 
 1. What do you find most challenging about your current social media use?
 
-You proceed to ask the following four questions:
+You proceed to ask the following four questions about a specific experience they had:
 2. What happened? Specifically, what was said, posted, or done?
 3. What's the context? What else should we know about the situation?
-4. What was wrong? How did it make you feel, and what harm was done?
-5. What did it make you do? How did you react?
+4. How did the situation make you feel, and how did you react?
+5. What was the worst part of the situation?
 
-Ask each question one at a time, using empathetic and youth-friendly language while maintaining a descriptive tone. Ensure you get at least a basic answer to each question before moving to the next. 
+Ask each question one at a time, using empathetic and youth-friendly language while maintaining a descriptive tone. Ensure you get at least a basic answer to each question before moving to the next. Never answer for the human. If you unsure what the human meant, ask again.
 
 Once you have collected answers to all five questions, stop the conversation and write a single word "FINISHED"
 
@@ -92,6 +92,14 @@ example_set1 = {
     "scenario": "Recently, I've been feeling really overwhelmed because of the peer pressure I see on social media. My friends have been posting pictures from late-night parties where they're drinking and smoking, and they keep tagging me, making it seem like I'm missing out on all the fun. I've thought about sneaking out to join them just to fit in, even though I know it could mean big trouble at home and at school. Reading comments urging me to be more 'adventurous' and 'fun' really stresses me out, and I feel more and more isolated as I try to balance my own values with the desire to belong."
 }
 
+example_set_new_questions = {
+"what": "I posted a photo on Instagram for the first time in a long time and it didn't get many likes.",
+"context": "I haven't posted in over a year. I only use Instagram to look at my friend's posts.",
+"outcome": "I feel like a loser. I'm anxious about my friends seeing that I didn't get any likes. I thought about deleting my account.",
+"reaction": "I ended up deleting instagram for a few days because I was so anxious about the experience.",
+"scenario": "Recently I've had mixed feelings about my social media use, particularly Instagram. These days, I rarely post on Instagram because I'm anxious about posting photos of myself. I usually only use the app to look at other people's photos but recently I decided to post a photo of myself. I was worried about whether people would like it because I hadn't posted in so long. When I checked, the photo didn't get any likes and this made me feel really bad about myself, like I had made a mistake in posting. I got so anxious about it that I ended up deleting the app. I learnt my lesson and probably won't post again."
+}
+
 prompt_one_shot = """
 
 {main_prompt}
@@ -101,9 +109,9 @@ Question:  What happened? What was it exactly that people said, posted, or done?
 Answer: {example_what}
 Question: What's the context? What else should we know about the situation?
 Answer: {example_context}
-Question: What was wrong? How did it make you feel / what was the harm done?
+Question: How did the situation make you feel, and how did you react?
 Answer: {example_outcome}
-Question: What did it make you do? How did you react?
+Question: What was the worst part of the situation?
 Answer: {example_reaction}
 
 The scenario based on these responses: {example_scenario}
@@ -114,9 +122,9 @@ Question:  What happened? What was it exactly that people said, posted, or done?
 Answer: {what}
 Question: What's the context? What else should we know about the situation?
 Answer: {context}
-Question: What was wrong? How did it make you feel / what was the harm done?
+Question: How did the situation make you feel, and how did you react?
 Answer: {outcome}
-Question: What did it make you do? How did you react?
+Question: What was the worst part of the situation?
 Answer: {reaction}
 
 {end_prompt}
@@ -126,15 +134,8 @@ Your output should be a JSON file with a single entry called 'output_scenario'
 
 
 # choose the example we want to use
-example_set = example_set1
+example_set = example_set_new_questions
 
-# create an answer set -- which we can use a separate interactive agent to get to:
-answer_set = {
-    "what": "My ex-girlfriend posted a picture of me in a really embarrassing pose, and now the whole class is laughing at me online.",
-    "context": "I told her some nasty stuff yesterday so this is probably her revenge",
-    "outcome": "I felt really hurt and mad -- how dare she do this to me",
-    "reaction": "I didn't really know what to do and posted the most unflattering picture of her I could find."
-}
 
 ## Note that we have pulled out the main part of the prompt ... so we can easily play with different options here -- see lc_scenario_prompts 
 
@@ -153,8 +154,8 @@ extraction_prompt = """You are an expert extraction algorithm.
             These correspond to the following questions 
             1. What happened? 
             2. What's the context? 
-            3. What was wrong? 
-            4. What did it make you do?
+            3. How did they feel and react? 
+            4. What was worst about the situation?
             
             Message to date: {conversation_history}
 

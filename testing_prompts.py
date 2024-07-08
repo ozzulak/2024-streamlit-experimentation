@@ -11,3 +11,12 @@ test_messages = """
     Human: I was just really miffed -- I obviously I let all the postdocs go and re-advertised their positions, and explained to the phds that this is not appropriate reaction to my coding struggles. 
     AI: Great, I think I got all I need, let me summarise this for you. 
     """
+
+
+# create an answer set -- which we can use a separate interactive agent to get to:
+answer_set = {
+    "what": "My ex-girlfriend posted a picture of me in a really embarrassing pose, and now the whole class is laughing at me online.",
+    "context": "I told her some nasty stuff yesterday so this is probably her revenge",
+    "outcome": "I felt really hurt and mad -- how dare she do this to me",
+    "reaction": "I didn't really know what to do and posted the most unflattering picture of her I could find."
+}
