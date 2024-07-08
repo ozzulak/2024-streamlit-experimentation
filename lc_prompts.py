@@ -77,7 +77,7 @@ Their current request is {input}.
 
 Suggest an alternative version of the scenario. Keep the language and content as similar as possible, while fulfiling the student's request. 
 
-Return your answer as aJSON file with a single entry called 'new_scenario'
+Return your answer as a JSON file with a single entry called 'new_scenario'
 
 """
 

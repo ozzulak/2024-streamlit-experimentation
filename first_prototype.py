@@ -232,7 +232,7 @@ def summariseData(testing = False):
     # prompt_1 = prompt_goth
     # prompt_2 = prompt_youth
     prompt_2 = prompt_youth
-    prompt_3 = prompt_friend
+    prompt_3 = prompt_goth
     end_prompt = end_prompt_core
 
     ### NEED TO EXTRACT THE CHOICES:
@@ -578,11 +578,6 @@ def finaliseScenario():
             if prompt:
                 st.chat_message("human").write(prompt) 
 
-                if adaptation: 
-                    response = adaptation_convo.invoke(input = prompt, scenario = package['scenario'])
-
-                    st.chat_message("ai").write(response["response"])
-
                 adaptation_prompt = PromptTemplate(input_variables=["input", "scenario"], template = prompt_adaptation)
                 json_parser = SimpleJsonOutputParser()
 
@@ -614,15 +609,15 @@ def finaliseScenario():
             
 
 def stateAgent(): 
-    testing = False
+    testing = True
 
     if testing:
         print("Running stateAgent loop -- session state: ", st.session_state['agentState'])
 ### make choice of the right 'agent': 
     if st.session_state['agentState'] == 'start':
-            getData(False)
+            # getData(False)
             # summariseData(testing)
-            # reviewData(testing)
+            reviewData(testing)
     elif st.session_state['agentState'] == 'summarise':
             summariseData(testing)
     elif st.session_state['agentState'] == 'review':
