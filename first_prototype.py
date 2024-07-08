@@ -609,15 +609,15 @@ def finaliseScenario():
             
 
 def stateAgent(): 
-    testing = True
+    testing = False
 
     if testing:
         print("Running stateAgent loop -- session state: ", st.session_state['agentState'])
 ### make choice of the right 'agent': 
     if st.session_state['agentState'] == 'start':
-            # getData(False)
+            getData(False)
             # summariseData(testing)
-            reviewData(testing)
+            # reviewData(testing)
     elif st.session_state['agentState'] == 'summarise':
             summariseData(testing)
     elif st.session_state['agentState'] == 'review':
