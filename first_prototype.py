@@ -139,7 +139,7 @@ def getData (testing = False ):
             st.chat_message("human").write(prompt)
             # Note: new messages are saved to history automatically by Langchain during run
             response = conversation.invoke(input = prompt)
-            print(response)
+            # print(response)
             if "FINISHED" in response['response']:
                 st.divider()
                 st.chat_message("ai").write("Great, I think I got all I need -- but let me double check!")
