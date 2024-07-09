@@ -231,7 +231,8 @@ def summariseData(testing = False):
     prompt_1 = prompt_formal
     # prompt_1 = prompt_goth
     # prompt_2 = prompt_youth
-    prompt_2 = prompt_youth
+    # prompt_2 = prompt_youth
+    prompt_2 = prompt_sibling
     prompt_3 = prompt_goth
     end_prompt = end_prompt_core
 

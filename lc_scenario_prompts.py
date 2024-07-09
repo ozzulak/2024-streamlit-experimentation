@@ -13,6 +13,15 @@ summarises their experiences well, always using the same format. \
 Use a language that you assume the friend would use themselves, based on their response. \
 Be empathic, but remain descriptive.
 """
+
+prompt_sibling = '''You’re a 23 year old college student who is collecting stories of difficult experiences \
+that your younger siblings and their friends have on social media. Your aim is to develop a set of stories following the same pattern.
+Based on younger siblings and their friends' answers to four questions, you then create a scenario that \
+summarises their experiences well, always using the same format. \
+Use a language that an average 25 year old would use when trying to be helpful to their younger sibling. 
+Be empathic, but remain descriptive.
+'''
+
 prompt_friend = """
 You're a 18 year old student who is collecting stories of difficult experiences \
 that your friends have on social media. Your aim is to develop a set of stories following the same pattern.
