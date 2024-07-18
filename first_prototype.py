@@ -39,8 +39,8 @@ DEBUG = False
 smith_client = Client()
 
 
-st.set_page_config(page_title="Petr-bot", page_icon="📖")
-st.title("📖 Petr-teenbot")
+st.set_page_config(page_title="Study bot", page_icon="📖")
+st.title("📖 Study bot")
 
 """
 
@@ -77,7 +77,7 @@ if adaptation:
     adaptation_memory = ConversationBufferMemory(memory_key="adaptation_history", chat_memory=adaptation_msgs)
 
 
-selections = st.sidebar
+# selections = st.sidebar
 
 ## removing this option for now. 
 # selections.markdown("## Feedback Scale")
@@ -85,24 +85,24 @@ selections = st.sidebar
 #     "thumbs" if st.sidebar.toggle(label="`Faces` ⇄ `Thumbs`", value=False) else "faces"
 # )
 
-with selections:
-    st.markdown("## LLM model selection")
-    st.markdown(":blue[Different models have widely differing costs.   \n \n  It seems that running this whole flow with chatGPT 4 costs about $0.1 per full flow as there are multiple processing steps 👻; while the 3.5-turbo is about 100x cheaper 🤑 and gpt-4o is about 6x cheaper (I think).]")
-    st.markdown('**Our prompts are currently set up for gpt-4 so you might want to run your first trial with that** ... however, multiple runs might be good to with some of the cheaper models.')
+# with selections:
+#     st.markdown("## LLM model selection")
+#     st.markdown(":blue[Different models have widely differing costs.   \n \n  It seems that running this whole flow with chatGPT 4 costs about $0.1 per full flow as there are multiple processing steps 👻; while the 3.5-turbo is about 100x cheaper 🤑 and gpt-4o is about 6x cheaper (I think).]")
+#     st.markdown('**Our prompts are currently set up for gpt-4 so you might want to run your first trial with that** ... however, multiple runs might be good to with some of the cheaper models.')
     
 
 
-    st.session_state.llm_model = st.selectbox(
-        "Which LLM would you like to try?",
-        [ 
-            'gpt-4o', 
-            'gpt-4',
-            'gpt-3.5-turbo-1106'
-            ],
-        key = 'llm_choice',
-    )
+#     st.session_state.llm_model = st.selectbox(
+#         "Which LLM would you like to try?",
+#         [ 
+#             'gpt-4o', 
+#             'gpt-4',
+#             'gpt-3.5-turbo-1106'
+#             ],
+#         key = 'llm_choice',
+#     )
 
-    st.write("**Current llm-model selection:**  \n " + st.session_state.llm_model)
+#     st.write("**Current llm-model selection:**  \n " + st.session_state.llm_model)
 
 ## ensure we are using a better prompt for 4o 
 if st.session_state['llm_model'] == "gpt-4o":
@@ -519,7 +519,9 @@ def reviewData(testing):
 
 
     ## if we haven't selected scenario, let's give them a choice. 
-        st.chat_message("ai").write("Please have a look at the scenarios above and pick one you like the most! You can use 👍 and 👎 if you want to leave a comment for us on any scenario.")
+        # st.chat_message("ai").write("Please have a look at the scenarios above and pick one you like the most! You can use 👍 and 👎 if you want to leave a comment for us on any scenario.")
+
+        st.chat_message("ai").write("Please have a look at the scenarios above. Use the 👍 and 👎  to leave a rating and short comment on each of the scenarios. Then pick the one that you like the most to continue. ")
      
         b1,b2,b3 = st.columns(3)
         p1 = b1.popover('Pick scenario 1', use_container_width=True)
@@ -562,7 +564,7 @@ def finaliseScenario():
     
     if package['judgment'] == "Ready as is!":
         st.markdown(":tada: Yay! :tada:")
-        st.markdown("You selected this scenario that you really liked and think it's ready for submision! ")
+        st.markdown("You've now completed the interaction and hopefully found a scenario that you liked! Please return to the survey window to complete the rest of the study -- your code for Prolific is '**CyberCorgi CodeCrumbs**' ")
         st.markdown(f":green[{package['scenario']}]")
     else:
         original = st.container()
@@ -574,7 +576,7 @@ def finaliseScenario():
         adapt_convo_container = st.container()
         
         with adapt_convo_container:
-            st.chat_message("ai").write("Okay, what could we change or add to to make this better?")
+            st.chat_message("ai").write("Okay, what's missing or could change to make this better?")
         
             if prompt:
                 st.chat_message("human").write(prompt) 
@@ -706,7 +708,7 @@ else:
         st.markdown(''' 
                     ## Welcome to our teenbot-prototype.
 
-                    \n In this task you’re going to engage with a prototype chatbot that asks you to imagine certain social media experiences. For this task we would like you to reflect on *general social media experiences or situations that have happened to people you know.* 
+                    \n In this task you’re going to engage with a prototype chatbot that asks you to imagine certain social media experiences. We would like you to imagine that you are a young person who regularly uses social media. Please answer the questions from the perspective of this young person. You can refer to *general* social media experiences or situations that have happened to people you know but please do not share any personal data or experiences. 
                     
                     \n \n **It's important that you do not report situations that contain personal information about yourself.** 
                     
