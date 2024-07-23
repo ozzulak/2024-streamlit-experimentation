@@ -563,6 +563,19 @@ def finaliseScenario():
 
     
     if package['judgment'] == "Ready as is!":
+
+        
+        
+        ## Save final feedback and the scenario
+        run_id = st.session_state['run_id']
+
+        smith_client.create_feedback(
+            run_id=run_id,
+            value=package,
+            key="final_package"
+        )
+        
+
         st.markdown(":tada: Yay! :tada:")
         st.markdown("You've now completed the interaction and hopefully found a scenario that you liked! Please return to the survey window to complete the rest of the study -- your code for Prolific is '**CyberCorgi CodeCrumbs**' ")
         st.markdown(f":green[{package['scenario']}]")
