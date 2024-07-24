@@ -542,7 +542,7 @@ def reviewData(testing):
         if not all_feedback_received:
 
             ## enforce rating on each of the scenarios above 
-            st.chat_message("ai").write("Please have a look at the scenarios above. Use the 👍 and 👎  to leave a rating—and potentially a comment—on each of the scenarios. Don't forget to click submit. \n \n Once you have done that, you can pick the one that you like the most to continue. ")
+            st.chat_message("ai").write("Please have a look at the scenarios above. Use the 👍 and 👎  to leave a rating—and potentially a comment—on each of the scenarios. *Don't forget to click submit when rating*. \n \n Once you have done that, you can pick the one that you like the most to continue. ")
         else:
             ## all scenarios rated -- show the new version
 
