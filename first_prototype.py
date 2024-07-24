@@ -371,11 +371,24 @@ def click_selection_yes(button_num, scenario):
         st.session_state['answer_set'] = "Testing - no answers"
 
     ## save all important information in one package
+
+    # collate all scenarios and feedback 
+
+    scenario_dict = {
+        'col1': st.session_state.response_1['output_scenario'],
+        'col2': st.session_state.response_2['output_scenario'],
+        'col3': st.session_state.response_3['output_scenario'],
+        'fb1': st.session_state['col1_fb'],
+        'fb2': st.session_state['col2_fb'],
+        'fb3': st.session_state['col3_fb']
+    }
+    
     st.session_state.scenario_package = {
             'scenario': scenario,
+            'answer set':  st.session_state['answer_set'],
             'judgment': st.session_state['scenario_decision'],
-            'chat history': msgs, 
-            'answer set':  st.session_state['answer_set']
+            'scenarios_all': scenario_dict,
+            'chat history': msgs
     }
 
 
@@ -518,20 +531,32 @@ def reviewData(testing):
         
 
 
-    ## if we haven't selected scenario, let's give them a choice. 
-        # st.chat_message("ai").write("Please have a look at the scenarios above and pick one you like the most! You can use 👍 and 👎 if you want to leave a comment for us on any scenario.")
+        # check if each scenario received feedback: 
+        all_feedback_received = all(value is not None for value in disable.values())
+        
 
-        st.chat_message("ai").write("Please have a look at the scenarios above. Use the 👍 and 👎  to leave a rating and short comment on each of the scenarios. Then pick the one that you like the most to continue. ")
+       
      
-        b1,b2,b3 = st.columns(3)
-        p1 = b1.popover('Pick scenario 1', use_container_width=True)
-        p2 = b2.popover('Pick scenario 2', use_container_width=True)
-        p3 = b3.popover('Pick scenario 3', use_container_width=True)
+        
+        # if all feedback is done, show the next steps 
+        if not all_feedback_received:
 
-        scenario_selection(p1,'1', st.session_state.response_1['output_scenario']) 
-        scenario_selection(p2,'2',st.session_state.response_2['output_scenario']) 
-        scenario_selection(p3,'3',st.session_state.response_3['output_scenario']) 
-    
+            ## enforce rating on each of the scenarios above 
+            st.chat_message("ai").write("Please have a look at the scenarios above. Use the 👍 and 👎  to leave a rating—and potentially a comment—on each of the scenarios. Don't forget to click submit. \n \n Once you have done that, you can pick the one that you like the most to continue. ")
+        else:
+            ## all scenarios rated -- show the new version
+
+            st.chat_message("ai").write("Thanks! You can now pick the one that you like the most to continue.")
+
+            b1,b2,b3 = st.columns(3)
+            p1 = b1.popover('Pick scenario 1', use_container_width=True)
+            p2 = b2.popover('Pick scenario 2', use_container_width=True)
+            p3 = b3.popover('Pick scenario 3', use_container_width=True)
+
+            scenario_selection(p1,'1', st.session_state.response_1['output_scenario']) 
+            scenario_selection(p2,'2',st.session_state.response_2['output_scenario']) 
+            scenario_selection(p3,'3',st.session_state.response_3['output_scenario']) 
+        
     
     ## and finally, assuming we have selected a scenario, let's move into the final state!  Note that we ensured that the screen is free for any new content now! 
     else:
@@ -564,10 +589,11 @@ def finaliseScenario():
     
     if package['judgment'] == "Ready as is!":
 
-        
-        
-        ## Save final feedback and the scenario
+        ## Let's save final feedback and the scenario
         run_id = st.session_state['run_id']
+
+
+
 
         smith_client.create_feedback(
             run_id=run_id,
