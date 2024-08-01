@@ -277,62 +277,69 @@ def exploreOptions ():
 
     # we know that the page will be empty here -- set up the streamlit infrastructure first:
 
-    side = st.sidebar
+    #side = st.sidebar
 
-    with side:
+    tab_generate, tab_review = st.tabs(["create scenario", "review scenario"])
+
+    with tab_review:
         st.markdown("## Your latest generated scenario: ")
         
         if st.session_state['latestScenario'] != "": 
             st.markdown(f":balloon: :balloon::balloon: \n \n *{st.session_state['latestScenario']['output_scenario']}* \n \n :balloon: :balloon::balloon:")
 
 
+        st.markdown("## The prompt you used: :writing_hand:")
+        if st.session_state['latestScenario'] != "": 
+            st.markdown(f" \n \n *{st.session_state['prompt_field']}*")
 
- 
-    voice = st.radio(
-        "Who would you like to generate your scenario?",
-        [
-            "psychologist",
-            "younger sibling",
-            "older sibling",
-            "friend",
-            "teacher",
-            "parent",
-            "elderly goth",
-            "let me make one"
-        ],
-        captions=[
-            "Expert developmental psychologist",
-            "14 yo teenager",
-            "23 yo college student",
-            "18 yo friend",
-            "high school teacher",
-            "your parent",
-            "45 yo punk goth",
-            "... whatever you would like to write"
-        ]
-    )
 
-    prompts_options = {
-        "psychologist": prompt_formal,
-        "younger sibling": prompt_youth,
-        "older sibling": prompt_sibling,
-        "friend": prompt_friend,
-        "teacher": prompt_teacher,
-        "parent": prompt_parent,
-        "elderly goth": prompt_goth,
-        "let me make one": prompt_own
-    }
-    
 
-    if voice:
-        prompt_text = st.text_area("Current prompt", 
-                     key = "prompt_field", 
-                     value=prompts_options[voice],
-                     height=200)
+    with tab_generate:
+        voice = st.radio(
+            "Who would you like to generate your scenario?",
+            [
+                "psychologist",
+                "younger sibling",
+                "older sibling",
+                "friend",
+                "teacher",
+                "parent",
+                "elderly goth",
+                "let me make one"
+            ],
+            captions=[
+                "Expert developmental psychologist",
+                "14 yo teenager",
+                "23 yo college student",
+                "18 yo friend",
+                "high school teacher",
+                "your parent",
+                "45 yo punk goth",
+                "... whatever you would like to write"
+            ]
+        )
 
-    st.button("See the scenario based on the prompt above", on_click=generateScenario)
+        prompts_options = {
+            "psychologist": prompt_formal,
+            "younger sibling": prompt_youth,
+            "older sibling": prompt_sibling,
+            "friend": prompt_friend,
+            "teacher": prompt_teacher,
+            "parent": prompt_parent,
+            "elderly goth": prompt_goth,
+            "let me make one": prompt_own
+        }
+        
 
-    
+        if voice:
+            prompt_text = st.text_area("Current prompt", 
+                        key = "prompt_field", 
+                        value=prompts_options[voice],
+                        height=200)
+
+        st.button("See the scenario based on the prompt above", on_click=generateScenario)
+
+
 
 
 
