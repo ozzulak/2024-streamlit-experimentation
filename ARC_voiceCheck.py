@@ -330,12 +330,15 @@ def exploreOptions ():
             "let me make one": prompt_own
         }
         
-
+        st.divider()
+        
         if voice:
-            prompt_text = st.text_area("Current prompt", 
+            st.markdown("**Selected prompt** ... feel free to adapt it!")
+            prompt_text = st.text_area("Selected prompt", 
                         key = "prompt_field", 
                         value=prompts_options[voice],
-                        height=200)
+                        height=200,
+                        label_visibility = "hidden")
 
         st.button("See the scenario based on the prompt above", on_click=generateScenario)
 
