@@ -272,8 +272,73 @@ def generateScenario(*args):
     # print(*args)
 
 
-
 def exploreOptions ():
+   # we know that the page will be empty here -- set up the streamlit infrastructure first:
+
+    #side = st.sidebar
+
+    col_select, col_review = st.columns(2)
+
+    with col_select:
+        voice = st.selectbox(
+            "Who would you like to generate your scenario?",
+            [
+                "psychologist",
+                "younger sibling",
+                "older sibling",
+                "friend",
+                "teacher",
+                "parent",
+                "elderly goth",
+                "let me make one"
+            ]
+        )
+
+        prompts_options = {
+            "psychologist": prompt_formal,
+            "younger sibling": prompt_youth,
+            "older sibling": prompt_sibling,
+            "friend": prompt_friend,
+            "teacher": prompt_teacher,
+            "parent": prompt_parent,
+            "elderly goth": prompt_goth,
+            "let me make one": prompt_own
+        }
+        
+    with col_review:
+        if voice:
+            prompt_text = st.text_area("**Selected prompt** ... feel free to adapt it!", 
+                        key = "prompt_field", 
+                        value=prompts_options[voice],
+                        height=300
+                        )
+            
+
+
+    st.divider()
+    
+    ## let them create & see the scenario
+    st.button("See the scenario based on the prompt above", on_click=generateScenario)
+
+
+    st.markdown("### Your latest generated scenario: ")
+    
+    if st.session_state['latestScenario'] != "": 
+        st.markdown(f":balloon: :balloon::balloon: \n \n *{st.session_state['latestScenario']['output_scenario']}* \n \n :balloon: :balloon::balloon:")
+
+
+    # st.markdown("## The prompt you used: :writing_hand:")
+    # if st.session_state['latestScenario'] != "": 
+    #     st.markdown(f" \n \n *{st.session_state['prompt_field']}*")
+
+
+
+
+
+
+
+
+def exploreOptions_tabs ():
 
     # we know that the page will be empty here -- set up the streamlit infrastructure first:
 
