@@ -447,14 +447,14 @@ def exploreOptions ():
             
 
 def stateAgent(): 
-    testing = True
+    testing = False
 
     if testing:
         print("Running stateAgent loop -- session state: ", st.session_state['agentState'])
 ### make choice of the right 'agent': 
     if st.session_state['agentState'] == 'start':
-            #getData(testing)
-            setUpStory(testing)
+            getData(testing)
+            # setUpStory(testing)
             # reviewData(testing)
     elif st.session_state['agentState'] == 'setup':
             setUpStory(testing)
