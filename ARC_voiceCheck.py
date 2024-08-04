@@ -282,6 +282,10 @@ def generateScenario(*args):
             "outcome" : answer_set['outcome'],
             "reaction" : answer_set['reaction']
         })
+
+        ## Save the corresponding package into the logs. 
+
+
         # st.session_state['latestScenario'] = st.session_state['prompt_field']
     # print(*args)
 
@@ -332,7 +336,7 @@ def exploreOptions ():
         voice = st.selectbox(
             "**Who would you like to generate your scenario?** *Choosing a specific persona will change the voice of the chatbot and the language they use to describe your social media scenario.*",
             [
-                "older sibling",
+                "younger sibling",
                 "friend",
                 "psychologist",            
                 "influencer",
@@ -342,7 +346,7 @@ def exploreOptions ():
         )
 
         prompts_options = {
-            "older sibling": prompt_sibling,
+            "younger sibling": prompt_youth,
             "friend": prompt_friend,
             "psychologist": prompt_formal,
             "influencer": prompt_socialmediainfluencer,

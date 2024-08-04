@@ -14,7 +14,7 @@ Use a language that an average 25 year old would use when trying to be helpful t
 Be empathic, but remain descriptive.
 '''
 
-prompt_friend = """ You're a 18 year old student who is collecting stories of difficult experiences \
+prompt_friend = """ You're a 23 year old who is collecting stories of difficult experiences \
 that your friends have on social media.\
 You're trying to use the same tone and language as your friend has done, \
 but you can reframe what they are saying a little to make it more understable to others. \
