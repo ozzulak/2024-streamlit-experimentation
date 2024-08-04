@@ -185,7 +185,7 @@ def getData (testing = False ):
         #st.text(st.write(response))
 
 
-def collectFeedback(answer, persona,  scenario):
+def collectFeedback(answer, persona,  scenario, counter):
 
     st.session_state.temp_debug = "called collectFeedback"
     ## not needed for now, but just so we have the opportunity to deal with faces as well 
@@ -217,6 +217,9 @@ def collectFeedback(answer, persona,  scenario):
             'rating_face': answer,
             'rating_num': score
         }
+
+        st.session_state[f"fb_{counter}"] = answer
+
         # Record the feedback with the formulated feedback type string
         # and optional comment
         smith_client.create_feedback(
@@ -270,6 +273,10 @@ def generateScenario(*args):
 
     prompt_selected = st.session_state['prompt_field']
 
+    run = get_current_run_tree()
+
+    st.session_state['run_id'] = run.id
+
     ## add the counter 
     st.session_state['counter'] += 1
 
@@ -306,11 +313,16 @@ def printScenario(scenario):
     st.markdown(f"**Persona:** *{scenario['persona']}*")
     st.markdown(f"**Scenario:** *{scenario['scenario']}*")
 
-    feedbackKey = "feedback_" + str(scenario['counter'])
-    if 'feedbackKey' in st.session_state and st.session_state['feedbackKey'] is not None: 
-        # fb has there components -- type, score, text
-        fb = st.session_state[feedbackKey]
-        st.markdown(f"**Your feedback:** {fb['score']} — {fb['text']}")
+    feedbackKey = "fb_" + str(scenario['counter'])
+    if feedbackKey in st.session_state: 
+        print(f"Feedback key found: {feedbackKey}")
+    
+        if st.session_state[feedbackKey] is not None: 
+            # fb has there components -- type, score, text
+            print(st.session_state[feedbackKey])
+            fb = st.session_state[feedbackKey]
+            st.markdown(f"**Your feedback:** {fb['score']} — {fb['text']}")
+
     else:
         st.markdown("***no feedback given***")
 
@@ -321,10 +333,7 @@ def exploreOptions ():
     #side = st.sidebar
     
     # tab_generate, tab_review = st.tabs(['generate new scenarios', 'review previous'])
-    run = get_current_run_tree()
-
-    st.session_state['run_id'] = run.id
-
+    
     sidebar_toggle = True
     if sidebar_toggle: 
         side = st.sidebar
@@ -412,7 +421,8 @@ def exploreOptions ():
             on_submit=collectFeedback,
             args=(
                 st.session_state['prompt_field'],  # persona description
-                st.session_state['latestScenario']['output_scenario']
+                st.session_state['latestScenario']['output_scenario'],
+                st.session_state['counter']
             )
             ## combine in args 
             # the prompt st.session_state['prompt_field'] together 
@@ -453,7 +463,11 @@ def stateAgent():
         print("Running stateAgent loop -- session state: ", st.session_state['agentState'])
 ### make choice of the right 'agent': 
     if st.session_state['agentState'] == 'start':
-            getData(testing)
+            if testing:
+                setUpStory(testing)
+                # reviewData(testing)
+            else:
+                getData(testing)
             # setUpStory(testing)
             # reviewData(testing)
     elif st.session_state['agentState'] == 'setup':
