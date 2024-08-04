@@ -265,6 +265,9 @@ def generateScenario(*args):
     # connect the prompt with the llm call, and then ensure output is json with our new parser
     chain = prompt_template | chat | json_parser
 
+    # ensure we are looking at the right answers 
+    answer_set = st.session_state['answer_set']
+
     prompt_selected = st.session_state['prompt_field']
 
     ## add the counter 
@@ -328,7 +331,7 @@ def exploreOptions ():
 
         with side:
              st.markdown("""   
-                    > ## :thinking_face: What do do? Two simple steps: 
+                    > ## :thinking_face: What do do? Three simple steps: 
                     > 
                     > :one: **Play around with how different personas work for your story**
                     > - *Choosing a specific persona will change the voice of the chatbot and the language they use to describe your social media scenario.* 
@@ -339,6 +342,8 @@ def exploreOptions ():
                     > - *Now that you've tried our options, make a few of your own -- who would you like to tell your story*
                     >
                     > **Adaptation tips**: *You can change who the persona is (e.g., age, background, tone they should use) as well as how they should engage with your problem! Try a few things and have fun!*
+                    > 
+                    > :three: **Return to the Qualtrics survey**
                 
                     """)
 
@@ -439,88 +444,17 @@ def exploreOptions ():
 
 
 
-def exploreOptions_tabs ():
-
-    # we know that the page will be empty here -- set up the streamlit infrastructure first:
-
-    tab_generate, tab_review = st.tabs(["create scenario", "review scenario"])
-
-    with tab_review:
-        st.markdown("## Your latest generated scenario: ")
-        
-        if st.session_state['latestScenario'] != "": 
-            st.markdown(f":balloon: :balloon::balloon: \n \n *{st.session_state['latestScenario']['output_scenario']}* \n \n :balloon: :balloon::balloon:")
-
-
-        st.markdown("## The prompt you used: :writing_hand:")
-        if st.session_state['latestScenario'] != "": 
-            st.markdown(f" \n \n *{st.session_state['prompt_field']}*")
-
-
-
-    with tab_generate:
-        voice = st.radio(
-            "Who would you like to generate your scenario?",
-            [
-                "psychologist",
-                "younger sibling",
-                "older sibling",
-                "friend",
-                "teacher",
-                "parent",
-                "elderly goth",
-                "let me make one"
-            ],
-            captions=[
-                "Expert developmental psychologist",
-                "14 yo teenager",
-                "23 yo college student",
-                "18 yo friend",
-                "high school teacher",
-                "your parent",
-                "45 yo punk goth",
-                "... whatever you would like to write"
-            ]
-        )
-
-        prompts_options = {
-            "psychologist": prompt_formal,
-            "younger sibling": prompt_youth,
-            "older sibling": prompt_sibling,
-            "friend": prompt_friend,
-            "teacher": prompt_teacher,
-            "parent": prompt_parent,
-            "elderly goth": prompt_goth,
-            "let me make one": prompt_own
-        }
-        
-        st.divider()
-        
-        if voice:
-            st.markdown("**Selected prompt** ... feel free to adapt it!")
-            prompt_text = st.text_area("Selected prompt", 
-                        key = "prompt_field", 
-                        value=prompts_options[voice],
-                        height=200,
-                        label_visibility = "hidden")
-
-        st.button("See the scenario based on the prompt above", on_click=generateScenario)
-
-
-
-
-
             
 
 def stateAgent(): 
-    testing = True
+    testing = False
 
     if testing:
         print("Running stateAgent loop -- session state: ", st.session_state['agentState'])
 ### make choice of the right 'agent': 
     if st.session_state['agentState'] == 'start':
-            #getData(testing)
-            setUpStory(testing)
+            getData(testing)
+            #setUpStory(testing)
             # reviewData(testing)
     elif st.session_state['agentState'] == 'setup':
             setUpStory(testing)
