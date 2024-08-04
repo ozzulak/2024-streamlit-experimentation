@@ -326,7 +326,7 @@ def printScenario(scenario):
     else:
         st.markdown("***no feedback given***")
 
-
+@traceable
 def exploreOptions ():
    # we know that the page will be empty here -- set up the streamlit infrastructure first:
 
