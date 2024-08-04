@@ -39,8 +39,8 @@ DEBUG = False
 smith_client = Client()
 
 
-st.set_page_config(page_title="Story bot", page_icon="📖")
-st.title("📖 Story bot")
+st.set_page_config(page_title="Story bot ", page_icon="📖")
+st.title("📖 Story bot — Trying Out Different Voices")
 
 """
 
@@ -289,47 +289,73 @@ def exploreOptions ():
     
     # tab_generate, tab_review = st.tabs(['generate new scenarios', 'review previous'])
 
+    sidebar_toggle = True
+    if sidebar_toggle: 
+        side = st.sidebar
+
+        with side:
+             st.markdown("""   
+                    > ## :thinking_face: What do do? Two simple steps: 
+                    > 
+                    > :one: **Play around with how different personas work for your story**
+                    > - *Choosing a specific persona will change the voice of the chatbot and the language they use to describe your social media scenario.* 
+                    >
+                    > - *You can test the voices out by pressing the  **See my story** button. Don't forget to leave feedback!*
+                    >
+                    > :two: **Make your own!**
+                    > - *Now that you've tried our options, make a few of your own -- who would you like to tell your story*
+                    >
+                    > **Adaptation tips**: *You can change who the persona is (e.g., age, background, tone they should use) as well as how they should engage with your problem! Try a few things and have fun!*
+                
+                    """)
+
+            # st.markdown("### General instructions")
+            # st.markdown("**Try our options:**   *In this task we would like you to play around with different personas/voices for our story bot prototype. As you are playing around with the options, we would like you to provide some feedback on which ones you like / dislike and why.* ")
+            # st.markdown("**Make your own:**  *Once you've tried a couple of options, try making a few of your own -- who would you like to tell your story?*")
+            # st.divider()
+            # st.markdown("**Adaptation tips:** *You can change who the persona is (e.g., age, background, tone they should use) as well as how they should engage with your problem! Try a few things and have fun!*")
+
+
+
+
     col_select, col_review = st.columns(2)
 
     with col_select:
+       
         voice = st.selectbox(
-            "Who would you like to generate your scenario?",
+            "**Who would you like to generate your scenario?** *Choosing a specific persona will change the voice of the chatbot and the language they use to describe your social media scenario.*",
             [
-                "psychologist",
-                "younger sibling",
                 "older sibling",
                 "friend",
-                "teacher",
-                "parent",
-                "elderly goth",
+                "psychologist",            
+                "influencer",
+                "cheeky goth",
                 "let me make one"
             ]
         )
 
         prompts_options = {
-            "psychologist": prompt_formal,
-            "younger sibling": prompt_youth,
             "older sibling": prompt_sibling,
             "friend": prompt_friend,
-            "teacher": prompt_teacher,
-            "parent": prompt_parent,
-            "elderly goth": prompt_goth,
+            "psychologist": prompt_formal,
+            "influencer": prompt_socialmediainfluencer,
+            "cheeky goth": prompt_goth,
             "let me make one": prompt_own
         }
         
     with col_review:
         if voice:
-            prompt_text = st.text_area("**Selected prompt** ... feel free to adapt it!", 
+            prompt_text = st.text_area("**Persona description:**  *Feel free to adapt it as much as you like! Remember, you can change 'who' they are or how they retell your story.* ",
                         key = "prompt_field", 
                         value=prompts_options[voice],
-                        height=300
+                        height=250
                         )
             
 
 
     
     ## let them create & see the scenario
-    st.button("See the scenario based on the prompt above", on_click=generateScenario)
+    st.button("See my story with as told by the selected persona!", on_click=generateScenario)
 
 
     
@@ -345,6 +371,9 @@ def exploreOptions ():
             optional_text_label="[Optional] Please provide an explanation",
             align = "flex-start",
             key=f"feedback_{st.session_state['counter']}"
+            ## combine in args 
+            # the prompt st.session_state['prompt_field'] together 
+            # with the st.session_state['latest_scenario']['output_scenario'] 
         )
 
     ### separate the expander 
@@ -389,8 +418,6 @@ def exploreOptions ():
 def exploreOptions_tabs ():
 
     # we know that the page will be empty here -- set up the streamlit infrastructure first:
-
-    #side = st.sidebar
 
     tab_generate, tab_review = st.tabs(["create scenario", "review scenario"])
 
