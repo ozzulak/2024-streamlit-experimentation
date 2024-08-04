@@ -14,7 +14,17 @@ test_messages = """
 
 
 # create an answer set -- which we can use a separate interactive agent to get to:
+
 answer_set = {
+    "what": "hated a picture someone shared of me",
+    "context": "was my girlfriend who was angry",
+    "outcome": "I felt really hurt and mad -- how dare she do this to me",
+    "reaction": "didn't know what to do"
+}
+
+
+
+answer_set_full = {
     "what": "My ex-girlfriend posted a picture of me in a really embarrassing pose, and now the whole class is laughing at me online.",
     "context": "I told her some nasty stuff yesterday so this is probably her revenge",
     "outcome": "I felt really hurt and mad -- how dare she do this to me",

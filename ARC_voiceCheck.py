@@ -12,7 +12,7 @@ from langsmith.run_helpers import get_current_run_tree
 from streamlit_feedback import streamlit_feedback
 
 from functools import partial
-
+import uuid
 import os
 
 import streamlit as st
@@ -50,6 +50,14 @@ st.title("📖 Story bot")
 if 'run_id' not in st.session_state: 
     ##TEMP TO TEST CODE -- adding feedback to particular run ! 
     st.session_state['run_id'] = None
+
+# we want to be able to tie together all feedback within a session (while collecting the feedback options one at a time)
+if 'client' not in st.session_state: 
+    st.session_state['client'] = uuid.uuid4()
+
+# set up the counter to track number of scenarios generated
+if 'counter' not in st.session_state: 
+    st.session_state['counter'] = 0
 
 if 'agentState' not in st.session_state: 
     st.session_state['agentState'] = "start"
@@ -253,7 +261,9 @@ def generateScenario(*args):
 
     prompt_selected = st.session_state['prompt_field']
 
-    
+    ## add the counter 
+    st.session_state['counter'] += 1
+
     with st.spinner("Processing scenario:"):
         st.session_state.latestScenario = chain.invoke({
             "main_prompt" : prompt_selected,
@@ -276,6 +286,8 @@ def exploreOptions ():
    # we know that the page will be empty here -- set up the streamlit infrastructure first:
 
     #side = st.sidebar
+    
+    # tab_generate, tab_review = st.tabs(['generate new scenarios', 'review previous'])
 
     col_select, col_review = st.columns(2)
 
@@ -315,17 +327,53 @@ def exploreOptions ():
             
 
 
-    st.divider()
     
     ## let them create & see the scenario
     st.button("See the scenario based on the prompt above", on_click=generateScenario)
 
 
-    st.markdown("### Your latest generated scenario: ")
+    
     
     if st.session_state['latestScenario'] != "": 
-        st.markdown(f":balloon: :balloon::balloon: \n \n *{st.session_state['latestScenario']['output_scenario']}* \n \n :balloon: :balloon::balloon:")
+        st.divider()
+        st.markdown("**Your latest generated scenario:** :balloon: :balloon::balloon:")
+        st.markdown(f"*{st.session_state['latestScenario']['output_scenario']}* ")
 
+        st.markdown("**Please share what you think:**")
+        latest_rating = streamlit_feedback(
+            feedback_type="faces",
+            optional_text_label="[Optional] Please provide an explanation",
+            align = "flex-start",
+            key=f"feedback_{st.session_state['counter']}"
+        )
+
+    ### separate the expander 
+        st.markdown('#')
+        st.divider()
+        
+        st.markdown("**Review previous scenarios**")
+        review_scenarios = st.expander("Click me")
+        
+        with review_scenarios:
+            st.markdown("**:red[This will include a list of previously generated scenarios & personas.]**")
+
+            st.markdown(""" **Persona:**  
+                        *You're a parent who is collecting stories of difficult experiences that your child has on social media. Your aim is to develop a set of stories following the same pattern. Based on your child's answers to four questions, you then create a scenario that summarises their experiences well, always using the same format. Use a language that you assume the child would use themselves, based on their response. Be empathic, but remain descriptive and informative.*""")
+                        
+            st.markdown("""**Scenario:** 
+                        *So, something really upsetting happened to me recently on social media. My girlfriend, who was really angry at me for some reason, posted a picture of me that I absolutely hated. It was so embarrassing and made me feel really hurt and mad. I couldn't believe she would do something like that to me. The worst part was, I didn't even know what to do about it. I felt completely lost and just didn't know how to handle the situation.*
+                        """)
+            st.divider()
+            st.markdown(""" 
+                        **Persona:**  
+                        *You're a 14 year old teenager who is collecting stories of difficult experiences that your friends have on social media. Your aim is to develop a set of stories following the same pattern. Based on friend's answers to four questions, you then create a scenario that summarises their experiences well, always using the same format. Use a language that you assume the friend would use themselves, based on their response. Be empathic, but remain descriptive.* """)
+                      
+            st.markdown("""
+                        **Scenario:** 
+                        *So, something really messed up happened recently. My girlfriend, who was super angry at me for some reason, shared a picture of me that I absolutely hated. Like, it was one of those pics where you just look awful and you never want anyone to see it. When I saw it, I felt really hurt and mad. I mean, how dare she do this to me? It felt like such a betrayal. The worst part was, I had no idea what to do about it. I was just stuck, feeling all these emotions and not knowing how to handle the situation.*
+                        """)
+
+        
 
     # st.markdown("## The prompt you used: :writing_hand:")
     # if st.session_state['latestScenario'] != "": 
