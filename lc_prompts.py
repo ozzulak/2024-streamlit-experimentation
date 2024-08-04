@@ -104,6 +104,10 @@ prompt_one_shot = """
 
 {main_prompt}
 
+Your aim is to develop a set of stories following the same pattern.
+Based on the answers to four questions, you then create a scenario that \
+summarises their experiences well, always using the same format.
+
 Example:
 Question:  What happened? What was it exactly that people said, posted, or done?
 Answer: {example_what}
@@ -140,7 +144,7 @@ example_set = example_set_new_questions
 ## Note that we have pulled out the main part of the prompt ... so we can easily play with different options here -- see lc_scenario_prompts 
 
 
-end_prompt_core = "Create a scenario based on these responses, using youth-friendly language."
+end_prompt_core = "Create a scenario based on these responses."
 
 
 extraction_prompt = """You are an expert extraction algorithm. 
