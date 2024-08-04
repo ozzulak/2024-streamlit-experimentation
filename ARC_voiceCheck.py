@@ -289,7 +289,8 @@ def generateScenario(*args):
         ## Save the corresponding package into the logs. 
         current_scenario = {
             'persona': st.session_state['prompt_field'],
-            'scenario': st.session_state.latestScenario['output_scenario']
+            'scenario': st.session_state.latestScenario['output_scenario'],
+            'counter': st.session_state['counter']
         }
 
         st.session_state.logs.append(current_scenario)
@@ -301,6 +302,14 @@ def printScenario(scenario):
     st.divider()
     st.markdown(f"**Persona:** *{scenario['persona']}*")
     st.markdown(f"**Scenario:** *{scenario['scenario']}*")
+
+    feedbackKey = "feedback_" + str(scenario['counter'])
+    if st.session_state[feedbackKey] is not None: 
+        # fb has there components -- type, score, text
+        fb = st.session_state[feedbackKey]
+        st.markdown(f"**Your feedback:** {fb['score']} — {fb['text']}")
+    else:
+        st.markdown("***no feedback given***")
 
 @traceable
 def exploreOptions ():
