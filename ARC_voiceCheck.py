@@ -423,8 +423,8 @@ def exploreOptions ():
         st.markdown('###')
         st.divider()
         
-        st.markdown("**Review previous scenarios**")
-        review_scenarios = st.expander("Click me ")
+        st.markdown("### Scenario History")
+        review_scenarios = st.expander("Click me to see your history")
         
         with review_scenarios:
 
