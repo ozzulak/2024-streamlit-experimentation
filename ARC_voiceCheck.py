@@ -69,6 +69,8 @@ if 'exp_data' not in st.session_state:
 if 'latestScenario' not in st.session_state: 
     st.session_state['latestScenario'] = ""
 
+if 'logs' not in st.session_state:
+    st.session_state['logs'] = []
 
 ## set the model to use in case this is the first run 
 # llm_model = "gpt-3.5-turbo-1106"
@@ -283,11 +285,22 @@ def generateScenario(*args):
             "reaction" : answer_set['reaction']
         })
 
-        ## Save the corresponding package into the logs. 
 
+        ## Save the corresponding package into the logs. 
+        current_scenario = {
+            'persona': st.session_state['prompt_field'],
+            'scenario': st.session_state.latestScenario['output_scenario']
+        }
+
+        st.session_state.logs.append(current_scenario)
 
         # st.session_state['latestScenario'] = st.session_state['prompt_field']
     # print(*args)
+
+def printScenario(scenario):
+    st.divider()
+    st.markdown(f"**Persona:** *{scenario['persona']}*")
+    st.markdown(f"**Scenario:** *{scenario['scenario']}*")
 
 @traceable
 def exploreOptions ():
@@ -393,30 +406,16 @@ def exploreOptions ():
         )
 
     ### separate the expander 
-        st.markdown('#')
+        st.markdown('###')
         st.divider()
         
         st.markdown("**Review previous scenarios**")
-        review_scenarios = st.expander("Click me")
+        review_scenarios = st.expander("Click me ")
         
         with review_scenarios:
-            st.markdown("**:red[This will include a list of previously generated scenarios & personas.]**")
 
-            st.markdown(""" **Persona:**  
-                        *You're a parent who is collecting stories of difficult experiences that your child has on social media. Your aim is to develop a set of stories following the same pattern. Based on your child's answers to four questions, you then create a scenario that summarises their experiences well, always using the same format. Use a language that you assume the child would use themselves, based on their response. Be empathic, but remain descriptive and informative.*""")
-                        
-            st.markdown("""**Scenario:** 
-                        *So, something really upsetting happened to me recently on social media. My girlfriend, who was really angry at me for some reason, posted a picture of me that I absolutely hated. It was so embarrassing and made me feel really hurt and mad. I couldn't believe she would do something like that to me. The worst part was, I didn't even know what to do about it. I felt completely lost and just didn't know how to handle the situation.*
-                        """)
-            st.divider()
-            st.markdown(""" 
-                        **Persona:**  
-                        *You're a 14 year old teenager who is collecting stories of difficult experiences that your friends have on social media. Your aim is to develop a set of stories following the same pattern. Based on friend's answers to four questions, you then create a scenario that summarises their experiences well, always using the same format. Use a language that you assume the friend would use themselves, based on their response. Be empathic, but remain descriptive.* """)
-                      
-            st.markdown("""
-                        **Scenario:** 
-                        *So, something really messed up happened recently. My girlfriend, who was super angry at me for some reason, shared a picture of me that I absolutely hated. Like, it was one of those pics where you just look awful and you never want anyone to see it. When I saw it, I felt really hurt and mad. I mean, how dare she do this to me? It felt like such a betrayal. The worst part was, I had no idea what to do about it. I was just stuck, feeling all these emotions and not knowing how to handle the situation.*
-                        """)
+            for log in st.session_state.logs:
+                printScenario(log)
 
         
 
