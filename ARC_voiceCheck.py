@@ -183,7 +183,7 @@ def getData (testing = False ):
         #st.text(st.write(response))
 
 
-def collectFeedback(answer, column_id,  scenario):
+def collectFeedback(answer, persona,  scenario):
 
     st.session_state.temp_debug = "called collectFeedback"
     ## not needed for now, but just so we have the opportunity to deal with faces as well 
@@ -205,18 +205,22 @@ def collectFeedback(answer, column_id,  scenario):
     if score is not None:
         # Formulate feedback type string incorporating the feedback option
         # and score value
-        feedback_type_str = f"{answer['type']} {score} {answer['text']} \n {scenario}"
 
-        st.session_state.temp_debug = feedback_type_str
+        # payload = f"{answer['score']} rating scenario: \n {scenario} \n by persona: \n {persona}"
 
-        payload = f"{answer['score']} rating scenario: \n {scenario} \n Based on: \n {answer_set}"
-
+        payload = {
+            'id': st.session_state['client'],
+            'scenario': scenario,
+            'persona': persona,
+            'rating_face': answer,
+            'rating_num': score
+        }
         # Record the feedback with the formulated feedback type string
         # and optional comment
         smith_client.create_feedback(
             run_id= run_id,
             value = payload,
-            key = column_id,
+            key = "persona_feedback",
             score=score,
             comment=answer['text']
         )
@@ -281,13 +285,16 @@ def generateScenario(*args):
         # st.session_state['latestScenario'] = st.session_state['prompt_field']
     # print(*args)
 
-
+@traceable
 def exploreOptions ():
    # we know that the page will be empty here -- set up the streamlit infrastructure first:
 
     #side = st.sidebar
     
     # tab_generate, tab_review = st.tabs(['generate new scenarios', 'review previous'])
+    run = get_current_run_tree()
+
+    st.session_state['run_id'] = run.id
 
     sidebar_toggle = True
     if sidebar_toggle: 
@@ -370,7 +377,12 @@ def exploreOptions ():
             feedback_type="faces",
             optional_text_label="[Optional] Please provide an explanation",
             align = "flex-start",
-            key=f"feedback_{st.session_state['counter']}"
+            key=f"feedback_{st.session_state['counter']}",
+            on_submit=collectFeedback,
+            args=(
+                st.session_state['prompt_field'],  # persona description
+                st.session_state['latestScenario']['output_scenario']
+            )
             ## combine in args 
             # the prompt st.session_state['prompt_field'] together 
             # with the st.session_state['latest_scenario']['output_scenario'] 
