@@ -105,7 +105,7 @@ prompt_one_shot = """
 {main_prompt}
 
 Your aim is to develop a set of stories following the same pattern.
-Based on the answers to four questions, you then create a scenario that \
+Based on the answers to four questions, you then create a scenario that 
 summarises their experiences well, always using the same format.
 
 Example:

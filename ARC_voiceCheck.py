@@ -307,7 +307,7 @@ def printScenario(scenario):
     st.markdown(f"**Scenario:** *{scenario['scenario']}*")
 
     feedbackKey = "feedback_" + str(scenario['counter'])
-    if st.session_state[feedbackKey] is not None: 
+    if 'feedbackKey' in st.session_state and st.session_state['feedbackKey'] is not None: 
         # fb has there components -- type, score, text
         fb = st.session_state[feedbackKey]
         st.markdown(f"**Your feedback:** {fb['score']} — {fb['text']}")
@@ -447,14 +447,14 @@ def exploreOptions ():
             
 
 def stateAgent(): 
-    testing = False
+    testing = True
 
     if testing:
         print("Running stateAgent loop -- session state: ", st.session_state['agentState'])
 ### make choice of the right 'agent': 
     if st.session_state['agentState'] == 'start':
-            getData(testing)
-            #setUpStory(testing)
+            #getData(testing)
+            setUpStory(testing)
             # reviewData(testing)
     elif st.session_state['agentState'] == 'setup':
             setUpStory(testing)
