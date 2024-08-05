@@ -430,7 +430,7 @@ def exploreOptions ():
         st.markdown("**Your latest generated scenario:** :balloon: :balloon::balloon:")
         st.markdown(f"*{st.session_state['latestScenario']['output_scenario']}* ")
 
-        st.markdown("**Please share how well does this scenario match the voice you were going for?**")
+        st.markdown("**How well does this scenario match the voice you were going for?**")
         latest_rating = streamlit_feedback(
             feedback_type="faces",
             optional_text_label="[Optional] Please provide an explanation",
