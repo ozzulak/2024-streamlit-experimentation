@@ -250,7 +250,7 @@ def setUpStory(testing = False):
     with entry_messages:
 
         st.divider()
-        st.chat_message("ai").write("Seems I have everything! Are you ready to start exploring possible scenarios?")
+        st.chat_message("ai").write("Seems I have everything! Are you ready to explore your scenarios?")
 
     st.session_state['agentState'] = 'explore'
     st.button("I'm ready -- show me!", key = 'progressButton')
@@ -340,7 +340,7 @@ def exploreOptions ():
 
         with side:
              st.markdown("""   
-                    > ## :thinking_face: What do do? Three simple steps: 
+                    > ## :thinking_face: What to do? Three simple steps: 
                     > 
                     > :one: **Play around with how different personas work for your story**
                     > - *Choosing a specific persona will change the voice of the chatbot and the language they use to describe your social media scenario.* 
@@ -363,7 +363,25 @@ def exploreOptions ():
             # st.markdown("**Adaptation tips:** *You can change who the persona is (e.g., age, background, tone they should use) as well as how they should engage with your problem! Try a few things and have fun!*")
 
 
+    instructions = st.expander(" :iphone: On your phone? See instructions here :iphone:")
 
+    with instructions:
+        st.markdown("""   
+                    > ## :thinking_face: What to do? Three simple steps: 
+                    > 
+                    > :one: **Play around with how different personas work for your story**
+                    > - *Choosing a specific persona will change the voice of the chatbot and the language they use to describe your social media scenario.* 
+                    >
+                    > - *You can test the voices out by pressing the  **See my story** button. Don't forget to leave feedback!*
+                    >
+                    > :two: **Make your own!**
+                    > - *Now that you've tried our options, make a few of your own -- who would you like to tell your story*
+                    >
+                    > **Adaptation tips**: *You can change who the persona is (e.g., age, background, tone they should use) as well as how they should engage with your problem! Try a few things and have fun!*
+                    > 
+                    > :three: **Return to the Qualtrics survey**
+                
+                    """)
 
     col_select, col_review = st.columns(2)
 
@@ -543,15 +561,21 @@ else:
     consent_message = st.container()
     with consent_message:
         st.markdown(''' 
-                    ## Welcome to our teenbot-prototype.
+## Welcome to your first ARC task!	:memo: 
 
-                    \n In this task you’re going to engage with a prototype chatbot that asks you to imagine certain social media experiences. We would like you to imagine that you are a young person who regularly uses social media. Please answer the questions from the perspective of this young person. You can refer to *general* social media experiences or situations that have happened to people you know but please do not share any personal data or experiences. 
-                    
-                    \n \n **It's important that you do not report situations that contain personal information about yourself.** 
-                    
-                    \n \n To proceed to the task, please confirm that you have read and understood this information.
+\n In this task you’re going to engage with a prototype chatbot that asks you to imagine certain social media experiences. We would like you to: 
+
+> - Imagine that you are a **young person who regularly uses social media**. 
+> - Respond to the chatbot prompts **from the perspective of this young person**. 
+
+\n You can refer to *general* social media experiences or situations that have happened to people you know but please do not share any personal data or experiences. 
+
+\n \n **It's important that you do not report situations that contain personal information about yourself.** 
+
+\n \n To proceed to the task, please confirm that you have read and understood this information.
         ''')
         st.button("I accept", key = "consent_button", on_click=markConsent)
+
            
 
 
